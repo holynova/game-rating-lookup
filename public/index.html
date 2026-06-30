@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f1ea" />
+    <title>游戏评分查询</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <a class="repo-link" href="https://github.com/holynova/game-rating-lookup" target="_blank" rel="noreferrer">GitHub</a>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="kicker">Steam / 小黑盒</p>
+        <h1 id="page-title">装备鉴定台</h1>
+        <p class="lede">投入游戏名，鉴定评分词条。</p>
+      </section>
+
+      <section class="lookup-panel" aria-label="查询表单">
+        <form id="search-form" class="search-form">
+          <label for="game-input">待鉴定物品</label>
+          <div class="input-row">
+            <textarea
+              id="game-input"
+              name="q"
+              rows="3"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Hades, 赛博朋克2077, 艾尔登法环"
+              required
+            ></textarea>
+            <button type="submit">鉴定</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="status" class="status" aria-live="polite"></section>
+
+      <nav class="view-tabs" aria-label="结果视图">
+        <button class="tab-button is-active" type="button" data-view="search">本次结果</button>
+        <button class="tab-button" type="button" data-view="history">历史</button>
+      </nav>
+
+      <section id="results" class="results" data-panel="search" hidden>
+        <div id="result-list" class="result-list"></div>
+      </section>
+
+      <section id="history-results" class="results" data-panel="history" hidden>
+        <div class="grade-filter" aria-label="历史等级筛选">
+          <button class="filter-button is-active" type="button" data-grade-filter="all">全部</button>
+          <button class="filter-button" type="button" data-grade-filter="white">白</button>
+          <button class="filter-button" type="button" data-grade-filter="green">绿</button>
+          <button class="filter-button" type="button" data-grade-filter="blue">蓝</button>
+          <button class="filter-button" type="button" data-grade-filter="purple">紫</button>
+          <button class="filter-button" type="button" data-grade-filter="gold">金</button>
+        </div>
+        <div id="history-result-list" class="result-list"></div>
+      </section>
+    </main>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

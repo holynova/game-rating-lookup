@@ -1,0 +1,365 @@
+const form = document.querySelector("#search-form");
+const input = document.querySelector("#game-input");
+const statusEl = document.querySelector("#status");
+const resultsEl = document.querySelector("#results");
+const historyResultsEl = document.querySelector("#history-results");
+const resultList = document.querySelector("#result-list");
+const historyResultList = document.querySelector("#history-result-list");
+const submitButton = form.querySelector("button[type='submit']");
+const tabButtons = document.querySelectorAll(".tab-button");
+const filterButtons = document.querySelectorAll(".filter-button");
+
+const resultHistoryKey = "game-rating-lookup-result-history";
+const legacyHistoryKey = "game-rating-lookup-history";
+const batchLimit = 12;
+const numberFormatter = new Intl.NumberFormat("zh-CN");
+let activeGradeFilter = "all";
+
+const gradeLabels = {
+  white: "白",
+  green: "绿",
+  blue: "蓝",
+  purple: "紫",
+  gold: "金"
+};
+
+function normalizeQuery(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function readResultHistory() {
+  try {
+    const value = JSON.parse(localStorage.getItem(resultHistoryKey) || "[]");
+    return Array.isArray(value) ? value.filter((item) => item?.query && item?.data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeResultHistory(items) {
+  localStorage.setItem(resultHistoryKey, JSON.stringify(items));
+}
+
+function findCachedResult(query) {
+  const normalized = normalizeQuery(query);
+  return readResultHistory().find((item) => normalizeQuery(item.query) === normalized) || null;
+}
+
+function saveResult(query, data) {
+  const cleanQuery = query.trim();
+  if (!cleanQuery || !data) return;
+
+  const normalized = normalizeQuery(cleanQuery);
+  const current = readResultHistory().filter((item) => normalizeQuery(item.query) !== normalized);
+  writeResultHistory([
+    {
+      query: cleanQuery,
+      data,
+      updatedAt: new Date().toISOString()
+    },
+    ...current
+  ]);
+}
+
+function setActiveView(view) {
+  for (const button of tabButtons) {
+    button.classList.toggle("is-active", button.dataset.view === view);
+  }
+
+  resultsEl.hidden = view !== "search" || resultList.children.length === 0;
+  historyResultsEl.hidden = view !== "history";
+
+  if (view === "history") {
+    renderHistoryResults();
+  }
+}
+
+function setStatus(message, type = "") {
+  statusEl.textContent = message;
+  statusEl.className = `status ${type}`.trim();
+}
+
+function formatCount(value) {
+  const number = Number(value || 0);
+  return number > 0 ? numberFormatter.format(number) : "";
+}
+
+function parseQueries(rawValue) {
+  const raw = rawValue.trim();
+  if (!raw) return [];
+
+  const hasStrongSeparator = /[,，、;；\n\r]/.test(raw);
+  const separator = hasStrongSeparator ? /[,，、;；\n\r]+/ : /\s+/;
+
+  return raw
+    .split(separator)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 2)
+    .filter((item, index, array) => {
+      const normalized = normalizeQuery(item);
+      return array.findIndex((candidate) => normalizeQuery(candidate) === normalized) === index;
+    })
+    .slice(0, batchLimit);
+}
+
+function gradeFromScore(score100) {
+  if (score100 === null || score100 === undefined || Number.isNaN(score100)) return "white";
+  if (score100 >= 95) return "gold";
+  if (score100 >= 85) return "purple";
+  if (score100 >= 75) return "blue";
+  if (score100 >= 60) return "green";
+  return "white";
+}
+
+function bestGrade(data) {
+  const scores = [];
+  if (typeof data.steam?.score === "number") scores.push(data.steam.score);
+  if (data.heybox?.score) scores.push(Number(data.heybox.score) * 10);
+  return gradeFromScore(Math.max(...scores, 0));
+}
+
+function appendText(parent, tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.textContent = text;
+  parent.append(node);
+  return node;
+}
+
+function createAttributeRow({ label, value, detail }) {
+  const row = document.createElement("div");
+  row.className = "attribute-row";
+
+  appendText(row, "div", "attribute-label", label);
+  appendText(row, "div", "attribute-value", value || "未鉴定");
+  appendText(row, "div", "attribute-detail", detail || "");
+
+  return row;
+}
+
+function createRefreshButton(query) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "refresh-button";
+  button.textContent = "↻";
+  button.title = "刷新";
+  button.setAttribute("aria-label", `刷新 ${query}`);
+  button.addEventListener("click", () => refreshQuery(query));
+  return button;
+}
+
+function renderResult(data, options = {}) {
+  const target = options.target || resultList;
+  const query = options.query || data.query || data.matched?.name || "";
+  const identifiedName = data.matched?.name || "";
+  const heyboxScoreText = data.heybox?.scoreText || "";
+  const hasHeyboxScore = Boolean(data.heybox?.score) || Boolean(heyboxScoreText && !/暂无|未鉴定|无/.test(heyboxScoreText));
+  const isUnidentified = !identifiedName && !data.steam && !hasHeyboxScore;
+  const grade = bestGrade(data);
+  const card = document.createElement("article");
+  card.className = "game-result";
+  card.dataset.grade = grade;
+  card.classList.toggle("is-unidentified", isUnidentified);
+
+  const top = document.createElement("div");
+  top.className = "game-topline";
+
+  const title = document.createElement("div");
+  title.className = "game-title";
+  appendText(title, "p", "", data.matched?.appid ? `appid ${data.matched.appid}` : query);
+  appendText(title, "strong", "", query || identifiedName || "未鉴定物品");
+  top.append(title);
+
+  const actions = document.createElement("div");
+  actions.className = "card-actions";
+  if (options.cached) appendText(actions, "span", "cache-note", "已缓存");
+  actions.append(createRefreshButton(query));
+  appendText(actions, "span", "grade-badge", isUnidentified ? "未鉴定" : `${gradeLabels[grade]}装`);
+  top.append(actions);
+  card.append(top);
+
+  const attributeList = document.createElement("div");
+  attributeList.className = "attribute-list";
+
+  attributeList.append(
+    createAttributeRow({
+      label: "鉴定名",
+      value: identifiedName || "未鉴定",
+      detail: identifiedName && identifiedName !== query ? "请核对是否命中正确物品" : ""
+    })
+  );
+
+  attributeList.append(
+    createAttributeRow({
+      label: "好评率",
+      value: typeof data.steam?.score === "number" ? `+${data.steam.score}%` : "未鉴定",
+      detail: data.steam?.label || data.errors?.steam || ""
+    })
+  );
+
+  if (data.steam?.total) {
+    attributeList.append(
+      createAttributeRow({
+        label: "评价数",
+        value: formatCount(data.steam.total),
+        detail: ""
+      })
+    );
+  }
+
+  attributeList.append(
+    createAttributeRow({
+      label: "小黑盒",
+      value: hasHeyboxScore ? `+${data.heybox.scoreText}` : "未鉴定",
+      detail: data.errors?.heybox || ""
+    })
+  );
+
+  card.append(attributeList);
+  target.append(card);
+}
+
+function renderHistoryResults() {
+  const allItems = readResultHistory();
+  const items =
+    activeGradeFilter === "all"
+      ? allItems
+      : allItems.filter((item) => bestGrade(item.data) === activeGradeFilter);
+  historyResultList.innerHTML = "";
+
+  if (!allItems.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "还没有历史结果。";
+    historyResultList.append(empty);
+    return;
+  }
+
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "这个等级下还没有历史结果。";
+    historyResultList.append(empty);
+    return;
+  }
+
+  for (const item of items) {
+    renderResult(item.data, {
+      target: historyResultList,
+      query: item.query,
+      cached: true
+    });
+  }
+}
+
+async function fetchRating(query) {
+  const response = await fetch(`/api/ratings?q=${encodeURIComponent(query)}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "查询失败。");
+  }
+
+  return data;
+}
+
+async function refreshQuery(query) {
+  if (!query) return;
+
+  document.body.classList.add("is-loading");
+  setStatus(`正在刷新：${query}`);
+
+  try {
+    const data = await fetchRating(query);
+    saveResult(query, data);
+    renderHistoryResults();
+    setStatus(`已刷新：${data.matched?.name || query}`);
+  } catch (error) {
+    setStatus(error.message || "刷新失败。", "error");
+  } finally {
+    document.body.classList.remove("is-loading");
+  }
+}
+
+async function lookupBatch(queries) {
+  document.body.classList.add("is-loading");
+  submitButton.disabled = true;
+  setActiveView("search");
+  resultsEl.hidden = false;
+  resultList.innerHTML = "";
+
+  let successCount = 0;
+  let cachedCount = 0;
+  const total = queries.length;
+
+  try {
+    for (const [index, query] of queries.entries()) {
+      const cached = findCachedResult(query);
+      if (cached) {
+        renderResult(cached.data, {
+          target: resultList,
+          query: cached.query,
+          cached: true
+        });
+        cachedCount += 1;
+        successCount += 1;
+        continue;
+      }
+
+      setStatus(`正在查询 ${index + 1}/${total}：${query}`);
+      try {
+        const data = await fetchRating(query);
+        saveResult(query, data);
+        renderResult(data, {
+          target: resultList,
+          query
+        });
+        successCount += 1;
+      } catch (error) {
+        renderResult({
+          query,
+          matched: null,
+          steam: null,
+          heybox: null,
+          errors: {
+            steam: error.message || "查询失败",
+            heybox: null
+          }
+        });
+      }
+    }
+
+    const cacheText = cachedCount ? `，${cachedCount} 个来自历史` : "";
+    setStatus(successCount === total ? `查询完成${cacheText}。` : `完成 ${successCount}/${total} 个查询${cacheText}。`);
+  } finally {
+    submitButton.disabled = false;
+    document.body.classList.remove("is-loading");
+  }
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const queries = parseQueries(input.value);
+
+  if (!queries.length) {
+    resultsEl.hidden = true;
+    setStatus("请输入至少一个游戏名称。", "error");
+    return;
+  }
+
+  lookupBatch(queries);
+});
+
+for (const button of tabButtons) {
+  button.addEventListener("click", () => setActiveView(button.dataset.view));
+}
+
+for (const button of filterButtons) {
+  button.addEventListener("click", () => {
+    activeGradeFilter = button.dataset.gradeFilter || "all";
+    for (const item of filterButtons) {
+      item.classList.toggle("is-active", item === button);
+    }
+    renderHistoryResults();
+  });
+}
