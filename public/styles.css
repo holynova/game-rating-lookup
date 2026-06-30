@@ -33,6 +33,7 @@
 html {
   min-height: 100%;
   background: var(--bg);
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 body {
@@ -74,7 +75,7 @@ button:disabled {
   max-width: 680px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 14px 12px 28px;
+  padding: 14px 12px calc(96px + env(safe-area-inset-bottom));
 }
 
 .repo-link {
@@ -298,6 +299,7 @@ textarea:focus {
 .result-list {
   display: grid;
   gap: 8px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
 }
 
 .empty-state {
@@ -349,13 +351,17 @@ textarea:focus {
 .game-result[data-grade="gold"] {
   --grade: #f0b84a;
   --grade-bg: #332714;
-  box-shadow: 0 0 0 1px #6d531d;
+  box-shadow:
+    0 0 0 1px #6d531d,
+    0 0 10px rgb(240 184 74 / 0.2),
+    inset 0 0 8px rgb(240 184 74 / 0.1);
 }
 
 .game-result[data-grade="gold"]:hover {
   box-shadow:
     0 0 0 1px #f0b84a,
-    0 0 16px rgb(240 184 74 / 0.22);
+    0 0 18px rgb(240 184 74 / 0.3),
+    inset 0 0 10px rgb(240 184 74 / 0.14);
 }
 
 .game-result:hover {
@@ -538,7 +544,7 @@ textarea:focus {
 
 @media (min-width: 520px) {
   .shell {
-    padding: 18px 16px 34px;
+    padding: 18px 16px calc(86px + env(safe-area-inset-bottom));
   }
 
   .input-row {
