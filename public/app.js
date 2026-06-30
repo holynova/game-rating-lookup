@@ -126,13 +126,17 @@ function appendText(parent, tag, className, text) {
   return node;
 }
 
-function createAttributeRow({ label, value, detail }) {
+function createAttributeRow({ label, name, value, detail }) {
   const row = document.createElement("div");
   row.className = "attribute-row";
 
   appendText(row, "div", "attribute-label", label);
-  appendText(row, "div", "attribute-value", value || "未鉴定");
-  appendText(row, "div", "attribute-detail", detail || "");
+  const body = document.createElement("div");
+  body.className = "attribute-body";
+  appendText(body, "span", "attribute-name", name ? `鉴定名 ${name}` : "未鉴定");
+  appendText(body, "strong", "attribute-value", value || "未鉴定");
+  if (detail) appendText(body, "span", "attribute-detail", detail);
+  row.append(body);
 
   return row;
 }
@@ -151,10 +155,11 @@ function createRefreshButton(query) {
 function renderResult(data, options = {}) {
   const target = options.target || resultList;
   const query = options.query || data.query || data.matched?.name || "";
-  const identifiedName = data.matched?.name || "";
+  const steamName = data.matched?.name || "";
+  const heyboxName = data.heybox?.name || "";
   const heyboxScoreText = data.heybox?.scoreText || "";
   const hasHeyboxScore = Boolean(data.heybox?.score) || Boolean(heyboxScoreText && !/暂无|未鉴定|无/.test(heyboxScoreText));
-  const isUnidentified = !identifiedName && !data.steam && !hasHeyboxScore;
+  const isUnidentified = !steamName && !data.steam && !heyboxName && !hasHeyboxScore;
   const grade = bestGrade(data);
   const card = document.createElement("article");
   card.className = "game-result";
@@ -166,8 +171,8 @@ function renderResult(data, options = {}) {
 
   const title = document.createElement("div");
   title.className = "game-title";
-  appendText(title, "p", "", data.matched?.appid ? `appid ${data.matched.appid}` : query);
-  appendText(title, "strong", "", query || identifiedName || "未鉴定物品");
+  appendText(title, "p", "", data.matched?.appid ? `appid ${data.matched.appid}` : "待鉴定物品");
+  appendText(title, "strong", "", query || steamName || heyboxName || "未鉴定物品");
   top.append(title);
 
   const actions = document.createElement("div");
@@ -181,37 +186,29 @@ function renderResult(data, options = {}) {
   const attributeList = document.createElement("div");
   attributeList.className = "attribute-list";
 
-  attributeList.append(
-    createAttributeRow({
-      label: "鉴定名",
-      value: identifiedName || "未鉴定",
-      detail: identifiedName && identifiedName !== query ? "请核对是否命中正确物品" : ""
-    })
-  );
+  const steamMeta = [data.steam?.total ? `${formatCount(data.steam.total)} 条评价` : "", data.steam?.label || data.errors?.steam || ""]
+    .filter(Boolean)
+    .join(" / ");
 
   attributeList.append(
     createAttributeRow({
-      label: "好评率",
+      label: "Steam",
+      name: steamName,
       value: typeof data.steam?.score === "number" ? `+${data.steam.score}%` : "未鉴定",
-      detail: data.steam?.label || data.errors?.steam || ""
+      detail: steamMeta
     })
   );
 
-  if (data.steam?.total) {
-    attributeList.append(
-      createAttributeRow({
-        label: "评价数",
-        value: formatCount(data.steam.total),
-        detail: ""
-      })
-    );
-  }
+  const heyboxMeta = [data.heybox?.ratingCount ? `${formatCount(data.heybox.ratingCount)} 次鉴定` : "", data.errors?.heybox || ""]
+    .filter(Boolean)
+    .join(" / ");
 
   attributeList.append(
     createAttributeRow({
       label: "小黑盒",
+      name: heyboxName,
       value: hasHeyboxScore ? `+${data.heybox.scoreText}` : "未鉴定",
-      detail: data.errors?.heybox || ""
+      detail: heyboxMeta
     })
   );
 
