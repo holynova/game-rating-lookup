@@ -17,11 +17,11 @@ const numberFormatter = new Intl.NumberFormat("zh-CN");
 let activeGradeFilter = "all";
 
 const gradeLabels = {
-  white: "白",
-  green: "绿",
-  blue: "蓝",
-  purple: "紫",
-  gold: "金"
+  white: "普通",
+  green: "优秀",
+  blue: "稀有",
+  purple: "史诗",
+  gold: "传奇"
 };
 
 function normalizeQuery(value) {
@@ -180,7 +180,7 @@ function renderResult(data, options = {}) {
   actions.className = "card-actions";
   if (options.cached) appendText(actions, "span", "cache-note", "已缓存");
   actions.append(createRefreshButton(query));
-  appendText(actions, "span", "grade-badge", isUnidentified ? "未鉴定" : `${gradeLabels[grade]}装`);
+  appendText(actions, "span", "grade-badge", isUnidentified ? "未鉴定" : gradeLabels[grade]);
   top.append(actions);
   card.append(top);
 
