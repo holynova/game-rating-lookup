@@ -1,4 +1,3 @@
 name = "game-rating-lookup-api"
 main = "worker.js"
 compatibility_date = "2026-07-01"
-workers_dev = false
