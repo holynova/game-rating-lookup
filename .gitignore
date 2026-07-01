@@ -1,5 +1,7 @@
 .chrome-*/
 mobile-*.png
 node_modules/
+.wrangler/
+.worker-dist/
 .DS_Store
 Thumbs.db

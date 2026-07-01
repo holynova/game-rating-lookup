@@ -11,6 +11,7 @@ const filterButtons = document.querySelectorAll(".filter-button");
 
 const resultHistoryKey = "game-rating-lookup-result-history";
 const legacyHistoryKey = "game-rating-lookup-history";
+const apiBase = String(window.GAME_RATING_API_BASE || "").replace(/\/$/, "");
 const batchLimit = 12;
 const numberFormatter = new Intl.NumberFormat("zh-CN");
 let activeGradeFilter = "all";
@@ -250,7 +251,7 @@ function renderHistoryResults() {
 }
 
 async function fetchRating(query) {
-  const response = await fetch(`/api/ratings?q=${encodeURIComponent(query)}`);
+  const response = await fetch(`${apiBase}/api/ratings?q=${encodeURIComponent(query)}`);
   const data = await response.json();
 
   if (!response.ok) {
