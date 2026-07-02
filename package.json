@@ -5,7 +5,7 @@
   "private": false,
   "type": "module",
   "bin": {
-    "game-tier": "./bin/game-tier.js"
+    "game-tier": "bin/game-tier.js"
   },
   "files": [
     "bin",
