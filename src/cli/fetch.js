@@ -21,7 +21,7 @@ async function fetchJsonWithCurl(url, headers = {}, options = {}) {
   const args = ["-sS", "-L", "--max-time", String(timeoutSeconds)];
 
   for (const [name, value] of Object.entries({
-    "user-agent": "Mozilla/5.0 Gametire/1.0",
+    "user-agent": "Mozilla/5.0 Game-Tier/1.0",
     accept: "application/json,text/plain,*/*",
     ...headers
   })) {

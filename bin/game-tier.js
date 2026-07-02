@@ -45,12 +45,12 @@ const gradeColors = {
 
 function usage() {
   return `Usage:
-  gametire <game...>
-  gametire --file games.txt
-  gametire --json <game...>
-  gametire --refresh <game...>
-  gametire history [--grade white|green|blue|purple|gold]
-  gametire cache clear
+  game-tier <game...>
+  game-tier --file games.txt
+  game-tier --json <game...>
+  game-tier --refresh <game...>
+  game-tier history [--grade white|green|blue|purple|gold]
+  game-tier cache clear
 
 Options:
   --file <path>       Read game names from a text file
@@ -278,7 +278,7 @@ async function history(args) {
 
 async function cacheCommand(args) {
   if (args.subcommand !== "clear") {
-    throw new Error("Supported cache command: gametire cache clear");
+    throw new Error("Supported cache command: game-tier cache clear");
   }
 
   await clearCache();
@@ -302,7 +302,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  const bin = basename(process.argv[1] || "gametire");
+  const bin = basename(process.argv[1] || "game-tier");
   console.error(`${bin}: ${error.message}`);
   process.exitCode = 1;
 });

@@ -5,7 +5,7 @@ import { normalizeQuery } from "../core/format.js";
 
 export const cachePath = join(
   process.env.XDG_CACHE_HOME || join(homedir(), ".cache"),
-  "gametire",
+  "game-tier",
   "results.json"
 );
 

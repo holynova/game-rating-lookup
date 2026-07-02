@@ -48,7 +48,7 @@ export async function fetchJson(url, headers = {}, options = {}) {
     response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "user-agent": "Mozilla/5.0 Gametire/1.0",
+        "user-agent": "Mozilla/5.0 Game-Tier/1.0",
         accept: "application/json,text/plain,*/*",
         ...headers
       }
