@@ -1,15 +1,47 @@
 {
-  "name": "game-rating-lookup",
+  "name": "gametire",
   "version": "1.0.0",
-  "private": true,
+  "description": "A CLI and web app for looking up Steam review scores and Xiaoheihe ratings by game name.",
+  "private": false,
   "type": "module",
+  "bin": {
+    "gametire": "./bin/gametire.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "public",
+    "worker.js",
+    "server.js",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "test": "node --test",
+    "prepack": "npm test && node bin/gametire.js --help > /dev/null",
+    "pack:dry": "npm pack --dry-run",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy"
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "keywords": [
+    "steam",
+    "xiaoheihe",
+    "game",
+    "rating",
+    "cli"
+  ],
+  "homepage": "https://github.com/holynova/game-rating-lookup#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holynova/game-rating-lookup.git"
+  },
+  "bugs": {
+    "url": "https://github.com/holynova/game-rating-lookup/issues"
+  },
+  "license": "MIT"
 }
