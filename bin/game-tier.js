@@ -2,6 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
+import { pathToFileURL } from "node:url";
 import { getRatings } from "../src/core/ratings.js";
 import {
   batchLimit,
@@ -43,7 +44,7 @@ const gradeColors = {
   gold: "gold"
 };
 
-function usage() {
+export function usage() {
   return `Usage:
   game-tier <game...>
   game-tier --file games.txt
@@ -62,7 +63,7 @@ Options:
   --help             Show this help`;
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv, options = {}) {
   const args = {
     command: "lookup",
     queries: [],
@@ -70,7 +71,7 @@ function parseArgs(argv) {
     json: false,
     refresh: false,
     cache: true,
-    color: process.stdout.isTTY && !process.env.NO_COLOR,
+    color: Boolean(options.isTTY ?? process.stdout.isTTY) && !process.env.NO_COLOR,
     grade: "all",
     limit: batchLimit,
     help: false
@@ -116,17 +117,17 @@ function parseArgs(argv) {
   return args;
 }
 
-function colorize(enabled, color, text) {
+export function colorize(enabled, color, text) {
   if (!enabled) return text;
   return `${colorCodes[color] || ""}${text}${colorCodes.reset}`;
 }
 
-function formatCount(value) {
+export function formatCount(value) {
   const number = Number(value || 0);
   return number > 0 ? numberFormatter.format(number) : "";
 }
 
-function formatResult(result, options = {}) {
+export function formatResult(result, options = {}) {
   const grade = bestGrade(result.data);
   const gradeText = isUnidentified(result.data) ? "未鉴定" : gradeLabels[grade];
   const coloredGrade = colorize(options.color, gradeColors[grade], gradeText);
@@ -163,7 +164,7 @@ function formatResult(result, options = {}) {
   return lines.join("\n");
 }
 
-async function readQueries(args) {
+export async function readQueries(args) {
   const values = [...args.queries];
   if (args.file) {
     values.push(await readFile(args.file, "utf8"));
@@ -172,7 +173,7 @@ async function readQueries(args) {
   return parseQueries(values.join("\n"), args.limit);
 }
 
-async function lookupQuery(query, args) {
+export async function lookupQuery(query, args) {
   if (args.cache && !args.refresh) {
     const cached = await findCachedResult(query);
     if (cached) {
@@ -207,7 +208,7 @@ async function lookupQuery(query, args) {
   };
 }
 
-async function lookup(args) {
+export async function lookup(args) {
   const queries = await readQueries(args);
   if (!queries.length) {
     throw new Error("Please provide at least one game name with at least two characters.");
@@ -244,7 +245,7 @@ async function lookup(args) {
   console.log(results.map((result) => formatResult(result, args)).join("\n\n"));
 }
 
-async function history(args) {
+export async function history(args) {
   const items = await readResultHistory();
   const grade = args.grade || "all";
   const filtered =
@@ -276,7 +277,7 @@ async function history(args) {
   );
 }
 
-async function cacheCommand(args) {
+export async function cacheCommand(args) {
   if (args.subcommand !== "clear") {
     throw new Error("Supported cache command: game-tier cache clear");
   }
@@ -285,7 +286,7 @@ async function cacheCommand(args) {
   console.log(`Cleared cache: ${cachePath}`);
 }
 
-async function main() {
+export async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log(usage());
@@ -301,8 +302,10 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  const bin = basename(process.argv[1] || "game-tier");
-  console.error(`${bin}: ${error.message}`);
-  process.exitCode = 1;
-});
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  main().catch((error) => {
+    const bin = basename(process.argv[1] || "game-tier");
+    console.error(`${bin}: ${error.message}`);
+    process.exitCode = 1;
+  });
+}
