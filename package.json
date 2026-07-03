@@ -17,7 +17,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "test": "node --test",
-    "prepack": "npm test && node bin/game-tier.js --help > /dev/null",
+    "prepack": "npm test && node scripts/check-help.js",
     "pack:dry": "npm pack --dry-run",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy"
