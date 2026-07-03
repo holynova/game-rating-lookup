@@ -1,6 +1,6 @@
 {
   "name": "game-tier",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A CLI for looking up Steam review scores and Xiaoheihe ratings by game name.",
   "private": false,
   "type": "module",
