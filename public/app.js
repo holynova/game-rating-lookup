@@ -126,7 +126,7 @@ function appendText(parent, tag, className, text) {
   return node;
 }
 
-function createAttributeRow({ label, name, value, detail }) {
+function createAttributeRow({ label, name, value, detail, href, linkLabel }) {
   const row = document.createElement("div");
   row.className = "attribute-row";
 
@@ -136,6 +136,15 @@ function createAttributeRow({ label, name, value, detail }) {
   appendText(body, "span", "attribute-name", name ? `鉴定名 ${name}` : "未鉴定");
   appendText(body, "strong", "attribute-value", value || "未鉴定");
   if (detail) appendText(body, "span", "attribute-detail", detail);
+  if (href) {
+    const link = document.createElement("a");
+    link.className = "attribute-link";
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = linkLabel || "打开";
+    body.append(link);
+  }
   row.append(body);
 
   return row;
@@ -159,6 +168,12 @@ function renderResult(data, options = {}) {
   const heyboxName = data.heybox?.name || "";
   const heyboxScoreText = data.heybox?.scoreText || "";
   const hasHeyboxScore = Boolean(data.heybox?.score) || Boolean(heyboxScoreText && !/暂无|未鉴定|无/.test(heyboxScoreText));
+  const steamAppid = data.matched?.appid || data.steam?.appid || "";
+  const steamHref = steamAppid ? `https://store.steampowered.com/app/${steamAppid}` : "";
+  const heyboxAppid = data.heybox?.appid || data.heybox?.steamAppid || "";
+  const heyboxHref = heyboxAppid
+    ? `https://api.xiaoheihe.cn/game/share_game_detail?appid=${encodeURIComponent(heyboxAppid)}&game_type=pc`
+    : "";
   const isUnidentified = !steamName && !data.steam && !heyboxName && !hasHeyboxScore;
   const grade = bestGrade(data);
   const card = document.createElement("article");
@@ -195,7 +210,9 @@ function renderResult(data, options = {}) {
       label: "Steam",
       name: steamName,
       value: typeof data.steam?.score === "number" ? `+${data.steam.score}%` : "未鉴定",
-      detail: steamMeta
+      detail: steamMeta,
+      href: steamHref,
+      linkLabel: "Steam"
     })
   );
 
@@ -208,7 +225,9 @@ function renderResult(data, options = {}) {
       label: "小黑盒",
       name: heyboxName,
       value: hasHeyboxScore ? `+${data.heybox.scoreText}` : "未鉴定",
-      detail: heyboxMeta
+      detail: heyboxMeta,
+      href: heyboxHref,
+      linkLabel: "小黑盒"
     })
   );
 
