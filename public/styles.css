@@ -187,8 +187,10 @@ textarea {
 }
 
 textarea {
-  min-height: 78px;
-  resize: vertical;
+  height: 98px;
+  min-height: 98px;
+  max-height: 98px;
+  resize: none;
   padding: 10px 11px;
   font-size: 0.95rem;
   line-height: 1.45;
@@ -415,6 +417,37 @@ textarea:focus {
 
 .game-result:hover {
   transform: translateY(-1px);
+}
+
+.game-result.is-refreshing-card {
+  pointer-events: none;
+}
+
+.game-result.is-refreshing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, transparent, rgb(255 255 255 / 0.05), transparent),
+    rgb(16 19 24 / 0.46);
+  background-size: 220% 100%, auto;
+  animation: card-refresh-sweep 900ms linear infinite;
+}
+
+.game-result.is-refreshing-card::after {
+  content: "鉴定中";
+  position: absolute;
+  right: 9px;
+  bottom: 7px;
+  z-index: 3;
+  border: 1px solid var(--grade);
+  border-radius: 999px;
+  padding: 3px 7px;
+  color: var(--grade);
+  background: var(--panel);
+  font-size: 0.66rem;
+  font-weight: 820;
 }
 
 .game-result.is-unidentified {
@@ -677,6 +710,16 @@ textarea:focus {
 @keyframes refresh-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes card-refresh-sweep {
+  from {
+    background-position: 180% 0, 0 0;
+  }
+
+  to {
+    background-position: -180% 0, 0 0;
   }
 }
 

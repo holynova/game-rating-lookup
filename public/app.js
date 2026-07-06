@@ -42,8 +42,31 @@ const steamReviewLabels = {
 };
 
 if (buildVersionEl) {
-  const buildVersion = window.GAME_RATING_BUILD?.version || document.lastModified || "local";
-  buildVersionEl.textContent = `build ${buildVersion}`;
+  const buildVersion = window.GAME_RATING_BUILD?.builtAt || window.GAME_RATING_BUILD?.version || document.lastModified;
+  buildVersionEl.textContent = `build ${formatBuildVersion(buildVersion)}`;
+}
+
+function formatBuildVersion(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "local";
+
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZoneName: "short"
+  })
+    .formatToParts(date)
+    .reduce((memo, part) => {
+      memo[part.type] = part.value;
+      return memo;
+    }, {});
+
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName || ""}`.trim();
 }
 
 function normalizeQuery(value) {
@@ -325,6 +348,7 @@ function renderResult(data, options = {}) {
 
   card.append(attributeList);
   target.append(card);
+  return card;
 }
 
 function renderHistoryResults() {
@@ -374,7 +398,9 @@ async function fetchRating(query) {
 async function refreshQuery(query, button) {
   if (!query) return;
 
+  const card = button?.closest(".game-result") || null;
   document.body.classList.add("is-loading");
+  card?.classList.add("is-refreshing-card");
   button?.classList.add("is-refreshing");
   if (button) {
     button.disabled = true;
@@ -385,11 +411,19 @@ async function refreshQuery(query, button) {
   try {
     const data = await fetchRating(query);
     saveResult(query, data);
+    if (card?.parentElement) {
+      const newCard = renderResult(data, {
+        target: card.parentElement,
+        query
+      });
+      card.replaceWith(newCard);
+    }
     renderHistoryResults();
     setStatus(`已刷新：${data.matched?.name || query}`);
   } catch (error) {
     setStatus(error.message || "刷新失败。", "error");
   } finally {
+    card?.classList.remove("is-refreshing-card");
     button?.classList.remove("is-refreshing");
     if (button) {
       button.disabled = false;
@@ -539,6 +573,13 @@ form.addEventListener("submit", (event) => {
   }
 
   lookupBatchConcurrent(queries);
+});
+
+input.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+
+  event.preventDefault();
+  form.requestSubmit();
 });
 
 for (const button of tabButtons) {
