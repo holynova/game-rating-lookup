@@ -160,21 +160,21 @@ function parseQueries(rawValue) {
     });
 }
 
-function gradeFromScore(score100) {
+function gradeFromScore(score100, count = 0) {
   if (score100 === null || score100 === undefined || Number.isNaN(score100)) return "white";
-  if (score100 >= 95) return "gold";
-  if (score100 >= 85) return "purple";
+  if (score100 >= 95 && count >= 500) return "gold";
+  if (score100 >= 85 && count >= 50) return "purple";
   if (score100 >= 75) return "blue";
   if (score100 >= 60) return "green";
   return "white";
 }
 
 function steamGrade(data) {
-  return gradeFromScore(typeof data.steam?.score === "number" ? data.steam.score : null);
+  return gradeFromScore(typeof data.steam?.score === "number" ? data.steam.score : null, data.steam?.total || 0);
 }
 
 function heyboxGrade(data) {
-  return gradeFromScore(data.heybox?.score ? Number(data.heybox.score) * 10 : null);
+  return gradeFromScore(data.heybox?.score ? Number(data.heybox.score) * 10 : null, data.heybox?.ratingCount || 0);
 }
 
 function bestGrade(data) {
@@ -191,6 +191,11 @@ function appendText(parent, tag, className, text) {
 
 function translateSteamReviewLabel(label) {
   return steamReviewLabels[label] || label || "";
+}
+
+function primaryBadgeLabel(data, isUnidentified) {
+  if (isUnidentified) return "未鉴定";
+  return translateSteamReviewLabel(data.steam?.label) || gradeLabels[steamGrade(data)];
 }
 
 function hasMatchRisk(query, data) {
@@ -276,7 +281,7 @@ function renderResult(data, options = {}) {
   if (options.cached) appendText(actions, "span", "cache-note", "已缓存");
   actions.append(createRefreshButton(query));
   if (hasMatchRisk(query, data)) appendText(actions, "span", "match-warning", "疑似错位");
-  appendText(actions, "span", "grade-badge", isUnidentified ? "未鉴定" : gradeLabels[grade]);
+  appendText(actions, "span", "grade-badge", primaryBadgeLabel(data, isUnidentified));
   top.append(actions);
   card.append(top);
 
@@ -294,7 +299,7 @@ function renderResult(data, options = {}) {
     createAttributeRow({
       label: "Steam",
       name: steamName,
-      value: typeof data.steam?.score === "number" ? `+${data.steam.score}%` : "未鉴定",
+      value: typeof data.steam?.score === "number" ? `${data.steam.score}%` : "未鉴定",
       detail: steamMeta,
       href: steamHref,
       linkLabel: "Steam",
@@ -310,7 +315,7 @@ function renderResult(data, options = {}) {
     createAttributeRow({
       label: "小黑盒",
       name: heyboxName,
-      value: hasHeyboxScore ? `+${data.heybox.scoreText}` : "未鉴定",
+      value: hasHeyboxScore ? data.heybox.scoreText : "未鉴定",
       detail: heyboxMeta,
       href: heyboxHref,
       linkLabel: "小黑盒",

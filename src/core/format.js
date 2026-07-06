@@ -31,20 +31,19 @@ export function parseQueries(rawValue, limit = batchLimit) {
   return Number.isFinite(limit) ? items.slice(0, limit) : items;
 }
 
-export function gradeFromScore(score100) {
+export function gradeFromScore(score100, count = 0) {
   if (score100 === null || score100 === undefined || Number.isNaN(score100)) return "white";
-  if (score100 >= 95) return "gold";
-  if (score100 >= 85) return "purple";
+  if (score100 >= 95 && count >= 500) return "gold";
+  if (score100 >= 85 && count >= 50) return "purple";
   if (score100 >= 75) return "blue";
   if (score100 >= 60) return "green";
   return "white";
 }
 
 export function bestGrade(data) {
-  const scores = [];
-  if (typeof data.steam?.score === "number") scores.push(data.steam.score);
-  if (data.heybox?.score) scores.push(Number(data.heybox.score) * 10);
-  return gradeFromScore(Math.max(...scores, 0));
+  if (typeof data.steam?.score === "number") return gradeFromScore(data.steam.score, data.steam.total || 0);
+  if (data.heybox?.score) return gradeFromScore(Number(data.heybox.score) * 10, data.heybox.ratingCount || 0);
+  return gradeFromScore(null);
 }
 
 export function isUnidentified(data) {

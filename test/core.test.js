@@ -44,15 +44,23 @@ test("gradeFromScore maps score thresholds", () => {
   assert.equal(gradeFromScore(59), "white");
   assert.equal(gradeFromScore(60), "green");
   assert.equal(gradeFromScore(75), "blue");
-  assert.equal(gradeFromScore(85), "purple");
-  assert.equal(gradeFromScore(95), "gold");
+  assert.equal(gradeFromScore(85, 49), "blue");
+  assert.equal(gradeFromScore(85, 50), "purple");
+  assert.equal(gradeFromScore(95, 499), "purple");
+  assert.equal(gradeFromScore(95, 500), "gold");
 });
 
-test("bestGrade uses the best score across Steam and Heybox", () => {
+test("bestGrade uses Steam score with review-count gates", () => {
   assert.equal(
     bestGrade({
-      steam: { score: 82 },
-      heybox: { score: "9.6" }
+      steam: { score: 100, total: 15 },
+      heybox: { score: "9.6", ratingCount: 12000 }
+    }),
+    "blue"
+  );
+  assert.equal(
+    bestGrade({
+      steam: { score: 98, total: 305000 }
     }),
     "gold"
   );
