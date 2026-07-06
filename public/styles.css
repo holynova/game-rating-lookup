@@ -78,8 +78,22 @@ button:disabled {
   padding: 14px 12px calc(96px + env(safe-area-inset-bottom));
 }
 
+.top-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.build-version {
+  color: var(--faint);
+  font-size: 0.68rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .repo-link {
-  float: right;
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 5px 10px;
@@ -472,6 +486,26 @@ textarea:focus {
   border-top: 0;
 }
 
+.attribute-row[data-grade="white"] {
+  --source-grade: #cfd3ca;
+}
+
+.attribute-row[data-grade="green"] {
+  --source-grade: #36c36c;
+}
+
+.attribute-row[data-grade="blue"] {
+  --source-grade: #4a91ff;
+}
+
+.attribute-row[data-grade="purple"] {
+  --source-grade: #a46bff;
+}
+
+.attribute-row[data-grade="gold"] {
+  --source-grade: #f0b84a;
+}
+
 .attribute-label {
   color: var(--muted);
   font-size: 0.72rem;
@@ -499,7 +533,7 @@ textarea:focus {
 
 .attribute-value {
   grid-column: 4;
-  color: var(--grade);
+  color: var(--source-grade, var(--grade));
   font-size: 0.94rem;
   font-weight: 860;
   line-height: 1;
@@ -511,17 +545,32 @@ textarea:focus {
 .attribute-link {
   grid-column: 3;
   grid-row: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0;
   color: var(--muted);
-  font-size: 0.64rem;
+  background: var(--panel-soft);
   font-weight: 760;
   letter-spacing: 0;
   text-decoration: none;
   white-space: nowrap;
 }
 
+.attribute-link::after {
+  content: "↗";
+  color: var(--source-grade, var(--grade));
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
 .attribute-link:hover,
 .attribute-link:focus-visible {
-  color: var(--grade);
+  border-color: var(--source-grade, var(--grade));
+  color: var(--source-grade, var(--grade));
 }
 
 .attribute-detail {

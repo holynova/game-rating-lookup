@@ -1,0 +1,1 @@
+window.GAME_RATING_BUILD = {"version":"2026-07-06T14:59:38Z","builtAt":"2026-07-06T14:59:38.085Z"};

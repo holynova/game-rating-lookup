@@ -8,6 +8,7 @@ const historyResultList = document.querySelector("#history-result-list");
 const submitButton = form.querySelector("button[type='submit']");
 const tabButtons = document.querySelectorAll(".tab-button");
 const filterButtons = document.querySelectorAll(".filter-button");
+const buildVersionEl = document.querySelector("#build-version");
 
 const resultHistoryKey = "game-rating-lookup-result-history";
 const legacyHistoryKey = "game-rating-lookup-history";
@@ -23,6 +24,11 @@ const gradeLabels = {
   purple: "史诗",
   gold: "传奇"
 };
+
+if (buildVersionEl) {
+  const buildVersion = window.GAME_RATING_BUILD?.version || document.lastModified || "local";
+  buildVersionEl.textContent = `build ${buildVersion}`;
+}
 
 function normalizeQuery(value) {
   return String(value || "").trim().toLowerCase();
@@ -111,11 +117,16 @@ function gradeFromScore(score100) {
   return "white";
 }
 
+function steamGrade(data) {
+  return gradeFromScore(typeof data.steam?.score === "number" ? data.steam.score : null);
+}
+
+function heyboxGrade(data) {
+  return gradeFromScore(data.heybox?.score ? Number(data.heybox.score) * 10 : null);
+}
+
 function bestGrade(data) {
-  const scores = [];
-  if (typeof data.steam?.score === "number") scores.push(data.steam.score);
-  if (data.heybox?.score) scores.push(Number(data.heybox.score) * 10);
-  return gradeFromScore(Math.max(...scores, 0));
+  return steamGrade(data);
 }
 
 function appendText(parent, tag, className, text) {
@@ -126,9 +137,10 @@ function appendText(parent, tag, className, text) {
   return node;
 }
 
-function createAttributeRow({ label, name, value, detail, href, linkLabel }) {
+function createAttributeRow({ label, name, value, detail, href, linkLabel, grade }) {
   const row = document.createElement("div");
   row.className = "attribute-row";
+  if (grade) row.dataset.grade = grade;
 
   appendText(row, "div", "attribute-label", label);
   const body = document.createElement("div");
@@ -142,7 +154,8 @@ function createAttributeRow({ label, name, value, detail, href, linkLabel }) {
     link.href = href;
     link.target = "_blank";
     link.rel = "noreferrer";
-    link.textContent = linkLabel || "打开";
+    link.title = linkLabel ? `打开 ${linkLabel}` : "打开链接";
+    link.setAttribute("aria-label", link.title);
     body.append(link);
   }
   row.append(body);
@@ -175,7 +188,8 @@ function renderResult(data, options = {}) {
     ? `https://api.xiaoheihe.cn/game/share_game_detail?appid=${encodeURIComponent(heyboxAppid)}&game_type=pc`
     : "";
   const isUnidentified = !steamName && !data.steam && !heyboxName && !hasHeyboxScore;
-  const grade = bestGrade(data);
+  const grade = steamGrade(data);
+  const heyboxRowGrade = heyboxGrade(data);
   const card = document.createElement("article");
   card.className = "game-result";
   card.dataset.grade = grade;
@@ -212,7 +226,8 @@ function renderResult(data, options = {}) {
       value: typeof data.steam?.score === "number" ? `+${data.steam.score}%` : "未鉴定",
       detail: steamMeta,
       href: steamHref,
-      linkLabel: "Steam"
+      linkLabel: "Steam",
+      grade
     })
   );
 
@@ -227,7 +242,8 @@ function renderResult(data, options = {}) {
       value: hasHeyboxScore ? `+${data.heybox.scoreText}` : "未鉴定",
       detail: heyboxMeta,
       href: heyboxHref,
-      linkLabel: "小黑盒"
+      linkLabel: "小黑盒",
+      grade: heyboxRowGrade
     })
   );
 
