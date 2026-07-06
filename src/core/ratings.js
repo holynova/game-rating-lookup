@@ -136,15 +136,26 @@ export function extractHeyboxRatingCount(html) {
 
 export async function getHeyboxRatingCount(appid, options = {}) {
   const requestText = options.fetchText || fetchText;
-  const url = new URL("https://api.xiaoheihe.cn/game/share_game_detail");
-  url.searchParams.set("appid", appid);
-  url.searchParams.set("game_type", "pc");
+  const urls = [
+    new URL(`https://www.xiaoheihe.cn/app/topic/game/pc/${appid}`),
+    new URL("https://api.xiaoheihe.cn/game/share_game_detail")
+  ];
+  urls[1].searchParams.set("appid", appid);
+  urls[1].searchParams.set("game_type", "pc");
 
-  const html = await requestText(url, {
-    referer: "https://www.xiaoheihe.cn/"
-  });
+  for (const url of urls) {
+    try {
+      const html = await requestText(url, {
+        referer: "https://www.xiaoheihe.cn/"
+      });
+      const count = extractHeyboxRatingCount(html);
+      if (count) return count;
+    } catch {
+      // Try the next public detail endpoint; rating count is optional.
+    }
+  }
 
-  return extractHeyboxRatingCount(html);
+  return null;
 }
 
 export async function searchSteam(query, options = {}) {
