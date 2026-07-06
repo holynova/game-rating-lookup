@@ -1,6 +1,9 @@
 const form = document.querySelector("#search-form");
 const input = document.querySelector("#game-input");
 const statusEl = document.querySelector("#status");
+const progressEl = document.querySelector("#progress");
+const progressFill = document.querySelector("#progress-fill");
+const progressLabel = document.querySelector("#progress-label");
 const resultsEl = document.querySelector("#results");
 const historyResultsEl = document.querySelector("#history-results");
 const resultList = document.querySelector("#result-list");
@@ -25,6 +28,19 @@ const gradeLabels = {
   gold: "传奇"
 };
 
+const steamReviewLabels = {
+  "Overwhelmingly Positive": "好评如潮",
+  "Very Positive": "特别好评",
+  Positive: "好评",
+  "Mostly Positive": "多半好评",
+  Mixed: "褒贬不一",
+  "Mostly Negative": "多半差评",
+  Negative: "差评",
+  "Very Negative": "特别差评",
+  "Overwhelmingly Negative": "差评如潮",
+  "No user reviews": "暂无用户评测"
+};
+
 if (buildVersionEl) {
   const buildVersion = window.GAME_RATING_BUILD?.version || document.lastModified || "local";
   buildVersionEl.textContent = `build ${buildVersion}`;
@@ -32,6 +48,28 @@ if (buildVersionEl) {
 
 function normalizeQuery(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeTitle(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[\u2122\u00ae\u00a9:"'`\u2018\u2019\u201c\u201d()[\]{}.,，、；;!?！？\-_/\s]/g, "")
+    .replace(/demo|试玩版|试用版|ost|soundtrack|原声带/g, "");
+}
+
+function scoreName(query, candidate) {
+  const q = normalizeTitle(query);
+  const c = normalizeTitle(candidate);
+  if (!q || !c) return 0;
+  if (q === c) return 100;
+  if (c.includes(q) || q.includes(c)) return 80;
+
+  const qChars = new Set([...q]);
+  let overlap = 0;
+  for (const char of c) {
+    if (qChars.has(char)) overlap += 1;
+  }
+  return Math.round((overlap / Math.max(q.length, c.length)) * 70);
 }
 
 function readResultHistory() {
@@ -86,6 +124,20 @@ function setStatus(message, type = "") {
   statusEl.className = `status ${type}`.trim();
 }
 
+function setProgress(completed = 0, total = 0) {
+  const safeTotal = Math.max(Number(total) || 0, 0);
+  const safeCompleted = Math.min(Math.max(Number(completed) || 0, 0), safeTotal);
+  const percent = safeTotal ? Math.round((safeCompleted / safeTotal) * 100) : 0;
+
+  if (progressEl) progressEl.hidden = !safeTotal;
+  if (progressFill) progressFill.style.width = `${percent}%`;
+  if (progressLabel) progressLabel.textContent = safeTotal ? `${safeCompleted} / ${safeTotal}` : "0 / 0";
+}
+
+function hideProgress() {
+  setProgress(0, 0);
+}
+
 function formatCount(value) {
   const number = Number(value || 0);
   return number > 0 ? numberFormatter.format(number) : "";
@@ -137,6 +189,21 @@ function appendText(parent, tag, className, text) {
   return node;
 }
 
+function translateSteamReviewLabel(label) {
+  return steamReviewLabels[label] || label || "";
+}
+
+function hasMatchRisk(query, data) {
+  const steamScore = Number(data.matched?.matchScore || 0);
+  const steamName = data.matched?.name || "";
+  const heyboxName = data.heybox?.name || "";
+
+  if (query && steamName && scoreName(query, steamName) < 55 && steamScore < 110) return true;
+  if (steamName && heyboxName && scoreName(steamName, heyboxName) < 45) return true;
+  if (data.heybox?.matchedBy === "name" && steamName && heyboxName && scoreName(steamName, heyboxName) < 65) return true;
+  return false;
+}
+
 function createAttributeRow({ label, name, value, detail, href, linkLabel, grade }) {
   const row = document.createElement("div");
   row.className = "attribute-row";
@@ -170,7 +237,7 @@ function createRefreshButton(query) {
   button.textContent = "↻";
   button.title = "刷新";
   button.setAttribute("aria-label", `刷新 ${query}`);
-  button.addEventListener("click", () => refreshQuery(query));
+  button.addEventListener("click", () => refreshQuery(query, button));
   return button;
 }
 
@@ -208,6 +275,7 @@ function renderResult(data, options = {}) {
   actions.className = "card-actions";
   if (options.cached) appendText(actions, "span", "cache-note", "已缓存");
   actions.append(createRefreshButton(query));
+  if (hasMatchRisk(query, data)) appendText(actions, "span", "match-warning", "疑似错位");
   appendText(actions, "span", "grade-badge", isUnidentified ? "未鉴定" : gradeLabels[grade]);
   top.append(actions);
   card.append(top);
@@ -215,7 +283,10 @@ function renderResult(data, options = {}) {
   const attributeList = document.createElement("div");
   attributeList.className = "attribute-list";
 
-  const steamMeta = [data.steam?.total ? `${formatCount(data.steam.total)} 条评价` : "", data.steam?.label || data.errors?.steam || ""]
+  const steamMeta = [
+    data.steam?.total ? `${formatCount(data.steam.total)} 条评价` : "",
+    translateSteamReviewLabel(data.steam?.label) || data.errors?.steam || ""
+  ]
     .filter(Boolean)
     .join(" / ");
 
@@ -295,10 +366,15 @@ async function fetchRating(query) {
   return data;
 }
 
-async function refreshQuery(query) {
+async function refreshQuery(query, button) {
   if (!query) return;
 
   document.body.classList.add("is-loading");
+  button?.classList.add("is-refreshing");
+  if (button) {
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+  }
   setStatus(`正在刷新：${query}`);
 
   try {
@@ -309,6 +385,11 @@ async function refreshQuery(query) {
   } catch (error) {
     setStatus(error.message || "刷新失败。", "error");
   } finally {
+    button?.classList.remove("is-refreshing");
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+    }
     document.body.classList.remove("is-loading");
   }
 }
@@ -375,6 +456,7 @@ async function lookupBatchConcurrent(queries) {
   setActiveView("search");
   resultsEl.hidden = false;
   resultList.innerHTML = "";
+  setProgress(0, queries.length);
 
   let successCount = 0;
   let cachedCount = 0;
@@ -424,6 +506,7 @@ async function lookupBatchConcurrent(queries) {
     }
 
     completedCount += 1;
+    setProgress(completedCount, total);
     setStatus(`已完成 ${completedCount}/${total}，并发 ${concurrency}`);
     await lookupNext();
   }
@@ -436,6 +519,7 @@ async function lookupBatchConcurrent(queries) {
   } finally {
     submitButton.disabled = false;
     document.body.classList.remove("is-loading");
+    setTimeout(hideProgress, 700);
   }
 }
 

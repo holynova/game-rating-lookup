@@ -253,6 +253,41 @@ textarea:focus {
   color: var(--error);
 }
 
+.progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 2px 2px;
+}
+
+.progress[hidden] {
+  display: none;
+}
+
+.progress-track {
+  height: 6px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+}
+
+.progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 180ms ease;
+}
+
+.progress-label {
+  color: var(--faint);
+  font-size: 0.68rem;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
 .view-tabs {
   position: sticky;
   top: 0;
@@ -441,6 +476,35 @@ textarea:focus {
   line-height: 1;
 }
 
+.refresh-button.is-refreshing {
+  color: var(--accent);
+}
+
+.refresh-button.is-refreshing::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: refresh-spin 680ms linear infinite;
+}
+
+.refresh-button.is-refreshing {
+  font-size: 0;
+}
+
+.match-warning {
+  border: 1px solid rgb(224 111 98 / 0.45);
+  border-radius: 7px;
+  padding: 4px 5px;
+  color: var(--error);
+  background: rgb(224 111 98 / 0.08);
+  font-size: 0.64rem;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
 .grade-badge {
   display: inline-flex;
   align-items: center;
@@ -607,6 +671,12 @@ textarea:focus {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

@@ -69,6 +69,84 @@ export async function fetchJson(url, headers = {}, options = {}) {
   return response.json();
 }
 
+export async function fetchText(url, headers = {}, options = {}) {
+  const timeoutMs = Number(options.timeoutMs || 15000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "user-agent": "Mozilla/5.0 Game-Tier/1.0",
+        accept: "text/html,text/plain,*/*",
+        ...headers
+      }
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`timeout from ${url.hostname}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    throw new Error(`${response.status} from ${url.hostname}`);
+  }
+
+  return response.text();
+}
+
+function resolveNuxtPrimitive(data, value) {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value < data.length) {
+    return data[value];
+  }
+  return value;
+}
+
+export function extractHeyboxRatingCount(html) {
+  const match = String(html || "").match(
+    /<script type="application\/json"[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/
+  );
+  if (!match) return null;
+
+  let data;
+  try {
+    data = JSON.parse(match[1]);
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(data)) return null;
+
+  let bestCount = 0;
+  for (const item of data) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    if (!Object.hasOwn(item, "score_comment")) continue;
+
+    const count = Number(resolveNuxtPrimitive(data, item.score_comment));
+    if (Number.isFinite(count) && count > bestCount) bestCount = count;
+  }
+
+  return bestCount > 0 ? bestCount : null;
+}
+
+export async function getHeyboxRatingCount(appid, options = {}) {
+  const requestText = options.fetchText || fetchText;
+  const url = new URL("https://api.xiaoheihe.cn/game/share_game_detail");
+  url.searchParams.set("appid", appid);
+  url.searchParams.set("game_type", "pc");
+
+  const html = await requestText(url, {
+    referer: "https://www.xiaoheihe.cn/"
+  });
+
+  return extractHeyboxRatingCount(html);
+}
+
 export async function searchSteam(query, options = {}) {
   const requestJson = options.fetchJson || fetchJson;
   const url = new URL("https://store.steampowered.com/api/storesearch/");
@@ -147,6 +225,12 @@ export async function searchHeybox(query, steamAppid, options = {}) {
 
   const match = ranked[0] || null;
   if (!match) return null;
+  let ratingCount = null;
+  try {
+    ratingCount = await getHeyboxRatingCount(match.appid || match.steam_appid, options);
+  } catch {
+    ratingCount = null;
+  }
 
   return {
     appid: match.appid || null,
@@ -154,7 +238,7 @@ export async function searchHeybox(query, steamAppid, options = {}) {
     name: match.name,
     score: match.score || null,
     scoreText: match.score || match.score_desc || null,
-    ratingCount: null,
+    ratingCount,
     matchedBy: Number(match.steam_appid || match.appid || 0) === Number(steamAppid) ? "appid" : "name"
   };
 }

@@ -42,6 +42,12 @@
       </section>
 
       <section id="status" class="status" aria-live="polite"></section>
+      <section id="progress" class="progress" aria-label="查询进度" hidden>
+        <div class="progress-track">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <span id="progress-label" class="progress-label">0 / 0</span>
+      </section>
 
       <nav class="view-tabs" aria-label="结果视图">
         <button class="tab-button is-active" type="button" data-view="search">本次结果</button>

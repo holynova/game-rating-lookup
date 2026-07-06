@@ -1,1 +1,1 @@
-window.GAME_RATING_BUILD = {"version":"2026-07-06T14:59:38Z","builtAt":"2026-07-06T14:59:38.085Z"};
+window.GAME_RATING_BUILD = {"version":"2026-07-06T15:07:14Z","builtAt":"2026-07-06T15:07:14.499Z"};

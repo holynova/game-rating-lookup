@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getRatings } from "../src/core/ratings.js";
+import { extractHeyboxRatingCount, getRatings } from "../src/core/ratings.js";
 
 test("getRatings combines Steam search, Steam reviews, and Heybox rating", async () => {
   const calls = [];
@@ -52,18 +52,29 @@ test("getRatings combines Steam search, Steam reviews, and Heybox rating", async
 
     throw new Error(`Unexpected URL: ${url}`);
   };
+  const fetchText = async (url) => {
+    assert.equal(url.hostname, "api.xiaoheihe.cn");
+    assert.equal(url.pathname, "/game/share_game_detail");
+    return `<script type="application/json" id="__NUXT_DATA__">[{"score_comment":1},12013]</script>`;
+  };
 
-  const data = await getRatings("Hades", { fetchJson });
+  const data = await getRatings("Hades", { fetchJson, fetchText });
 
   assert.equal(data.matched.appid, 1145360);
   assert.equal(data.steam.score, 98);
   assert.equal(data.heybox.scoreText, "9.4");
+  assert.equal(data.heybox.ratingCount, 12013);
   assert.equal(data.heybox.matchedBy, "appid");
   assert.deepEqual(data.errors, {
     steam: null,
     heybox: null
   });
   assert.equal(calls.length, 3);
+});
+
+test("extractHeyboxRatingCount reads Nuxt score comments", () => {
+  const html = `<script type="application/json" id="__NUXT_DATA__">[{"star_1":2,"score_comment":1},321]</script>`;
+  assert.equal(extractHeyboxRatingCount(html), 321);
 });
 
 test("getRatings preserves per-source errors without failing the whole lookup", async () => {
