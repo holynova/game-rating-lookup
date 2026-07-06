@@ -15,6 +15,7 @@
     <main class="shell">
       <div class="top-meta">
         <span id="build-version" class="build-version">build --</span>
+        <button id="rules-open" class="meta-button" type="button">规则</button>
         <a class="repo-link" href="https://github.com/holynova/game-rating-lookup" target="_blank" rel="noreferrer">GitHub</a>
       </div>
       <section class="intro" aria-labelledby="page-title">
@@ -39,6 +40,14 @@
             <button type="submit">鉴定</button>
           </div>
         </form>
+      </section>
+
+      <section class="rating-source" aria-label="评分基准">
+        <span>评分基准</span>
+        <div class="source-toggle" role="group" aria-label="评分基准">
+          <button class="source-button is-active" type="button" data-rating-source="steam">Steam</button>
+          <button class="source-button" type="button" data-rating-source="heybox">小黑盒</button>
+        </div>
       </section>
 
       <section id="status" class="status" aria-live="polite"></section>
@@ -70,6 +79,19 @@
         <div id="history-result-list" class="result-list"></div>
       </section>
     </main>
+
+    <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
+      <form method="dialog" class="rules-panel">
+        <div class="rules-head">
+          <h2 id="rules-title">鉴定规则</h2>
+          <button class="dialog-close" type="submit" aria-label="关闭">×</button>
+        </div>
+        <p>输入一个或多个游戏名，鉴定台会查询 Steam 与小黑盒评分，并保留历史结果。</p>
+        <p>评分基准决定卡片主色、右上角徽章和历史等级筛选。切到小黑盒时，优先按小黑盒 10 分制评分显示。</p>
+        <p>装备颜色使用人数门槛：95%/9.5 且样本足够才是传奇，85%/8.5 且样本足够才是史诗，小样本高分不会直接变金。</p>
+        <p>如果平台识别名和输入名差异较大，会标记“疑似错位”，需要打开平台链接人工确认。</p>
+      </form>
+    </dialog>
 
     <script src="app.js" type="module"></script>
   </body>

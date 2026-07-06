@@ -11,14 +11,21 @@ const historyResultList = document.querySelector("#history-result-list");
 const submitButton = form.querySelector("button[type='submit']");
 const tabButtons = document.querySelectorAll(".tab-button");
 const filterButtons = document.querySelectorAll(".filter-button");
+const sourceButtons = document.querySelectorAll(".source-button");
 const buildVersionEl = document.querySelector("#build-version");
+const rulesOpenButton = document.querySelector("#rules-open");
+const rulesDialog = document.querySelector("#rules-dialog");
 
 const resultHistoryKey = "game-rating-lookup-result-history";
 const legacyHistoryKey = "game-rating-lookup-history";
+const ratingSourceKey = "game-rating-lookup-rating-source";
 const apiBase = String(window.GAME_RATING_API_BASE || "").replace(/\/$/, "");
 const lookupConcurrency = 3;
 const numberFormatter = new Intl.NumberFormat("zh-CN");
 let activeGradeFilter = "all";
+let activeRatingSource = localStorage.getItem(ratingSourceKey) === "heybox" ? "heybox" : "steam";
+let activeView = "search";
+let currentResultItems = [];
 
 const gradeLabels = {
   white: "普通",
@@ -130,14 +137,15 @@ function saveResult(query, data) {
 }
 
 function setActiveView(view) {
+  activeView = view === "history" ? "history" : "search";
   for (const button of tabButtons) {
-    button.classList.toggle("is-active", button.dataset.view === view);
+    button.classList.toggle("is-active", button.dataset.view === activeView);
   }
 
-  resultsEl.hidden = view !== "search" || resultList.children.length === 0;
-  historyResultsEl.hidden = view !== "history";
+  resultsEl.hidden = activeView !== "search" || resultList.children.length === 0;
+  historyResultsEl.hidden = activeView !== "history";
 
-  if (view === "history") {
+  if (activeView === "history") {
     renderHistoryResults();
   }
 }
@@ -200,8 +208,12 @@ function heyboxGrade(data) {
   return gradeFromScore(data.heybox?.score ? Number(data.heybox.score) * 10 : null, data.heybox?.ratingCount || 0);
 }
 
+function sourceGrade(data) {
+  return activeRatingSource === "heybox" ? heyboxGrade(data) : steamGrade(data);
+}
+
 function bestGrade(data) {
-  return steamGrade(data);
+  return sourceGrade(data);
 }
 
 function appendText(parent, tag, className, text) {
@@ -218,6 +230,9 @@ function translateSteamReviewLabel(label) {
 
 function primaryBadgeLabel(data, isUnidentified) {
   if (isUnidentified) return "未鉴定";
+  if (activeRatingSource === "heybox") {
+    return data.heybox?.scoreText && !/暂无|未鉴定|无/.test(data.heybox.scoreText) ? `小黑盒 ${data.heybox.scoreText}` : "小黑盒未鉴定";
+  }
   return translateSteamReviewLabel(data.steam?.label) || gradeLabels[steamGrade(data)];
 }
 
@@ -258,6 +273,33 @@ function createAttributeRow({ label, name, value, detail, href, linkLabel, grade
   return row;
 }
 
+function syncRatingSourceButtons() {
+  for (const button of sourceButtons) {
+    button.classList.toggle("is-active", button.dataset.ratingSource === activeRatingSource);
+    button.setAttribute("aria-pressed", String(button.dataset.ratingSource === activeRatingSource));
+  }
+}
+
+function renderCurrentResults() {
+  resultList.innerHTML = "";
+  for (const item of currentResultItems) {
+    renderResult(item.data, {
+      target: resultList,
+      query: item.query,
+      cached: item.cached
+    });
+  }
+  resultsEl.hidden = activeView !== "search" || currentResultItems.length === 0;
+}
+
+function setRatingSource(source) {
+  activeRatingSource = source === "heybox" ? "heybox" : "steam";
+  localStorage.setItem(ratingSourceKey, activeRatingSource);
+  syncRatingSourceButtons();
+  renderCurrentResults();
+  renderHistoryResults();
+}
+
 function createRefreshButton(query) {
   const button = document.createElement("button");
   button.type = "button";
@@ -283,7 +325,8 @@ function renderResult(data, options = {}) {
     ? `https://api.xiaoheihe.cn/game/share_game_detail?appid=${encodeURIComponent(heyboxAppid)}&game_type=pc`
     : "";
   const isUnidentified = !steamName && !data.steam && !heyboxName && !hasHeyboxScore;
-  const grade = steamGrade(data);
+  const grade = sourceGrade(data);
+  const steamRowGrade = steamGrade(data);
   const heyboxRowGrade = heyboxGrade(data);
   const card = document.createElement("article");
   card.className = "game-result";
@@ -326,7 +369,7 @@ function renderResult(data, options = {}) {
       detail: steamMeta,
       href: steamHref,
       linkLabel: "Steam",
-      grade
+      grade: steamRowGrade
     })
   );
 
@@ -411,6 +454,15 @@ async function refreshQuery(query, button) {
   try {
     const data = await fetchRating(query);
     saveResult(query, data);
+    currentResultItems = currentResultItems.map((item) =>
+      normalizeQuery(item.query) === normalizeQuery(query)
+        ? {
+            query,
+            data,
+            cached: false
+          }
+        : item
+    );
     if (card?.parentElement) {
       const newCard = renderResult(data, {
         target: card.parentElement,
@@ -495,6 +547,7 @@ async function lookupBatchConcurrent(queries) {
   setActiveView("search");
   resultsEl.hidden = false;
   resultList.innerHTML = "";
+  currentResultItems = [];
   setProgress(0, queries.length);
 
   let successCount = 0;
@@ -513,6 +566,11 @@ async function lookupBatchConcurrent(queries) {
     const cached = findCachedResult(query);
 
     if (cached) {
+      currentResultItems.push({
+        query: cached.query,
+        data: cached.data,
+        cached: true
+      });
       renderResult(cached.data, {
         target: resultList,
         query: cached.query,
@@ -525,13 +583,18 @@ async function lookupBatchConcurrent(queries) {
       try {
         const data = await fetchRating(query);
         saveResult(query, data);
+        currentResultItems.push({
+          query,
+          data,
+          cached: false
+        });
         renderResult(data, {
           target: resultList,
           query
         });
         successCount += 1;
       } catch (error) {
-        renderResult({
+        const errorData = {
           query,
           matched: null,
           steam: null,
@@ -540,7 +603,13 @@ async function lookupBatchConcurrent(queries) {
             steam: error.message || "查询失败",
             heybox: null
           }
+        };
+        currentResultItems.push({
+          query,
+          data: errorData,
+          cached: false
         });
+        renderResult(errorData);
       }
     }
 
@@ -586,6 +655,10 @@ for (const button of tabButtons) {
   button.addEventListener("click", () => setActiveView(button.dataset.view));
 }
 
+for (const button of sourceButtons) {
+  button.addEventListener("click", () => setRatingSource(button.dataset.ratingSource));
+}
+
 for (const button of filterButtons) {
   button.addEventListener("click", () => {
     activeGradeFilter = button.dataset.gradeFilter || "all";
@@ -595,3 +668,15 @@ for (const button of filterButtons) {
     renderHistoryResults();
   });
 }
+
+rulesOpenButton?.addEventListener("click", () => {
+  if (typeof rulesDialog?.showModal === "function") {
+    rulesDialog.showModal();
+  }
+});
+
+rulesDialog?.addEventListener("click", (event) => {
+  if (event.target === rulesDialog) rulesDialog.close();
+});
+
+syncRatingSourceButtons();

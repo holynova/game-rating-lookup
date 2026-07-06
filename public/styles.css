@@ -93,7 +93,8 @@ button:disabled {
   white-space: nowrap;
 }
 
-.repo-link {
+.repo-link,
+.meta-button {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 5px 10px;
@@ -104,9 +105,14 @@ button:disabled {
   text-decoration: none;
 }
 
-.repo-link:hover {
+.repo-link:hover,
+.meta-button:hover {
   color: var(--ink);
   border-color: var(--line-strong);
+}
+
+.meta-button {
+  line-height: 1;
 }
 
 .intro {
@@ -151,6 +157,40 @@ h1 {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
+}
+
+.rating-source {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
+.source-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  background: var(--panel-soft);
+}
+
+.source-button {
+  height: 30px;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 780;
+}
+
+.source-button.is-active {
+  color: #141006;
+  background: var(--accent);
 }
 
 .search-form {
@@ -288,6 +328,62 @@ textarea:focus {
   font-size: 0.68rem;
   font-weight: 720;
   white-space: nowrap;
+}
+
+.rules-dialog {
+  width: min(420px, calc(100vw - 28px));
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0;
+  color: var(--text);
+  background: var(--panel);
+}
+
+.rules-dialog::backdrop {
+  background: rgb(6 8 11 / 0.72);
+}
+
+.rules-panel {
+  margin: 0;
+  padding: 12px;
+}
+
+.rules-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.rules-head h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 820;
+  line-height: 1.2;
+}
+
+.dialog-close {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.rules-panel p {
+  margin: 10px 0 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 580;
+  line-height: 1.55;
 }
 
 .view-tabs {
