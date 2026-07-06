@@ -5,7 +5,6 @@ import { basename } from "node:path";
 import { pathToFileURL } from "node:url";
 import { getRatings } from "../src/core/ratings.js";
 import {
-  batchLimit,
   bestGrade,
   gradeLabels,
   isUnidentified,
@@ -59,7 +58,7 @@ Options:
   --refresh          Ignore cached results and update the cache
   --no-cache         Do not read or write the cache
   --no-color         Disable colored output
-  --limit <number>   Maximum batch size, default ${batchLimit}
+  --limit <number>   Maximum batch size, unlimited by default
   --help             Show this help`;
 }
 
@@ -73,7 +72,7 @@ export function parseArgs(argv, options = {}) {
     cache: true,
     color: Boolean(options.isTTY ?? process.stdout.isTTY) && !process.env.NO_COLOR,
     grade: "all",
-    limit: batchLimit,
+    limit: null,
     help: false
   };
 
@@ -98,7 +97,7 @@ export function parseArgs(argv, options = {}) {
     } else if (value === "--grade") {
       args.grade = argv[++index] || "all";
     } else if (value === "--limit") {
-      args.limit = Number(argv[++index] || batchLimit);
+      args.limit = Number(argv[++index]);
     } else if (value === "--help" || value === "-h") {
       args.help = true;
     } else if (value.startsWith("-")) {
@@ -110,7 +109,7 @@ export function parseArgs(argv, options = {}) {
     }
   }
 
-  if (!Number.isFinite(args.limit) || args.limit < 1) {
+  if (args.limit !== null && (!Number.isFinite(args.limit) || args.limit < 1)) {
     throw new Error("--limit must be a positive number");
   }
 

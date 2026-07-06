@@ -12,7 +12,7 @@ const filterButtons = document.querySelectorAll(".filter-button");
 const resultHistoryKey = "game-rating-lookup-result-history";
 const legacyHistoryKey = "game-rating-lookup-history";
 const apiBase = String(window.GAME_RATING_API_BASE || "").replace(/\/$/, "");
-const batchLimit = 12;
+const lookupConcurrency = 3;
 const numberFormatter = new Intl.NumberFormat("zh-CN");
 let activeGradeFilter = "all";
 
@@ -99,8 +99,7 @@ function parseQueries(rawValue) {
     .filter((item, index, array) => {
       const normalized = normalizeQuery(item);
       return array.findIndex((candidate) => normalizeQuery(candidate) === normalized) === index;
-    })
-    .slice(0, batchLimit);
+    });
 }
 
 function gradeFromScore(score100) {
@@ -335,6 +334,76 @@ async function lookupBatch(queries) {
   }
 }
 
+async function lookupBatchConcurrent(queries) {
+  document.body.classList.add("is-loading");
+  submitButton.disabled = true;
+  setActiveView("search");
+  resultsEl.hidden = false;
+  resultList.innerHTML = "";
+
+  let successCount = 0;
+  let cachedCount = 0;
+  let completedCount = 0;
+  let nextIndex = 0;
+  const total = queries.length;
+  const concurrency = Math.min(lookupConcurrency, total);
+
+  async function lookupNext() {
+    const index = nextIndex;
+    nextIndex += 1;
+    if (index >= total) return;
+
+    const query = queries[index];
+    const cached = findCachedResult(query);
+
+    if (cached) {
+      renderResult(cached.data, {
+        target: resultList,
+        query: cached.query,
+        cached: true
+      });
+      cachedCount += 1;
+      successCount += 1;
+    } else {
+      setStatus(`正在查询 ${index + 1}/${total}：${query}`);
+      try {
+        const data = await fetchRating(query);
+        saveResult(query, data);
+        renderResult(data, {
+          target: resultList,
+          query
+        });
+        successCount += 1;
+      } catch (error) {
+        renderResult({
+          query,
+          matched: null,
+          steam: null,
+          heybox: null,
+          errors: {
+            steam: error.message || "查询失败",
+            heybox: null
+          }
+        });
+      }
+    }
+
+    completedCount += 1;
+    setStatus(`已完成 ${completedCount}/${total}，并发 ${concurrency}`);
+    await lookupNext();
+  }
+
+  try {
+    await Promise.all(Array.from({ length: concurrency }, () => lookupNext()));
+
+    const cacheText = cachedCount ? `，${cachedCount} 个来自历史` : "";
+    setStatus(successCount === total ? `查询完成${cacheText}。` : `完成 ${successCount}/${total} 个查询${cacheText}。`);
+  } finally {
+    submitButton.disabled = false;
+    document.body.classList.remove("is-loading");
+  }
+}
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const queries = parseQueries(input.value);
@@ -345,7 +414,7 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
-  lookupBatch(queries);
+  lookupBatchConcurrent(queries);
 });
 
 for (const button of tabButtons) {

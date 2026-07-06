@@ -33,6 +33,7 @@ test("usage documents the public command name", () => {
 
 test("parseArgs parses lookup options without depending on the current TTY", () => {
   assert.deepEqual(parseArgs(["--json", "--refresh", "--no-color", "Hades"]).queries, ["Hades"]);
+  assert.equal(parseArgs(["Hades"]).limit, null);
 
   const args = parseArgs(["--file", "games.txt", "--limit", "3", "--no-cache"], {
     isTTY: true

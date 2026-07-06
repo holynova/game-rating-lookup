@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  batchLimit,
   bestGrade,
   gradeFromScore,
   parseQueries
@@ -13,12 +12,13 @@ import {
   secondaryTitlePenalty
 } from "../src/core/ratings.js";
 
-test("parseQueries splits, trims, deduplicates, and limits input", () => {
+test("parseQueries splits, trims, and deduplicates input without a default limit", () => {
   const input = "Hades, Hades，赛博朋克2077\n艾尔登法环; a";
   assert.deepEqual(parseQueries(input), ["Hades", "赛博朋克2077", "艾尔登法环"]);
 
-  const many = Array.from({ length: batchLimit + 3 }, (_, index) => `game-${index}`).join(",");
-  assert.equal(parseQueries(many).length, batchLimit);
+  const many = Array.from({ length: 15 }, (_, index) => `game-${index}`).join(",");
+  assert.equal(parseQueries(many).length, 15);
+  assert.equal(parseQueries(many, 3).length, 3);
 });
 
 test("normalizeTitle removes punctuation and secondary labels", () => {

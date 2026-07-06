@@ -1,4 +1,4 @@
-export const batchLimit = 12;
+export const batchLimit = Infinity;
 
 export const gradeLabels = {
   white: "普通",
@@ -19,15 +19,16 @@ export function parseQueries(rawValue, limit = batchLimit) {
   const hasStrongSeparator = /[,，、;；\n\r]/.test(raw);
   const separator = hasStrongSeparator ? /[,，、;；\n\r]+/ : /\s+/;
 
-  return raw
+  const items = raw
     .split(separator)
     .map((item) => item.trim())
     .filter((item) => item.length >= 2)
     .filter((item, index, array) => {
       const normalized = normalizeQuery(item);
       return array.findIndex((candidate) => normalizeQuery(candidate) === normalized) === index;
-    })
-    .slice(0, limit);
+    });
+
+  return Number.isFinite(limit) ? items.slice(0, limit) : items;
 }
 
 export function gradeFromScore(score100) {
