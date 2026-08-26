@@ -14,6 +14,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "build:config": "node scripts/write-web-config.js",
     "build:version": "node scripts/write-build-version.js",
     "start": "node server.js",
     "dev": "node server.js",

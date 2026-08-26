@@ -21,6 +21,7 @@ const legacyHistoryKey = "game-rating-lookup-history";
 const ratingSourceKey = "game-rating-lookup-rating-source";
 const apiBase = String(window.GAME_RATING_API_BASE || "").replace(/\/$/, "");
 const lookupConcurrency = 3;
+const apiTimeoutMs = 15000;
 const numberFormatter = new Intl.NumberFormat("zh-CN");
 let activeGradeFilter = "all";
 let activeRatingSource = localStorage.getItem(ratingSourceKey) === "heybox" ? "heybox" : "steam";
@@ -428,8 +429,34 @@ function renderHistoryResults() {
 }
 
 async function fetchRating(query) {
-  const response = await fetch(`${apiBase}/api/ratings?q=${encodeURIComponent(query)}`);
-  const data = await response.json();
+  if (!apiBase) throw new Error("评分接口地址未配置。");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), apiTimeoutMs);
+
+  let response;
+  try {
+    response = await fetch(`${apiBase}/api/ratings?q=${encodeURIComponent(query)}`, {
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("评分接口请求超时，请检查网络或稍后重试。");
+    }
+    if (error instanceof TypeError) {
+      throw new Error("无法连接评分接口，请检查网络或接口地址。");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`评分接口返回了无效响应（HTTP ${response.status}）。`);
+  }
 
   if (!response.ok) {
     throw new Error(data.error || "查询失败。");

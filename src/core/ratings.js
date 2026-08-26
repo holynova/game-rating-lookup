@@ -69,93 +69,9 @@ export async function fetchJson(url, headers = {}, options = {}) {
   return response.json();
 }
 
-export async function fetchText(url, headers = {}, options = {}) {
-  const timeoutMs = Number(options.timeoutMs || 15000);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  let response;
-  try {
-    response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "user-agent": "Mozilla/5.0 Game-Tier/1.0",
-        accept: "text/html,text/plain,*/*",
-        ...headers
-      }
-    });
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error(`timeout from ${url.hostname}`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  if (!response.ok) {
-    throw new Error(`${response.status} from ${url.hostname}`);
-  }
-
-  return response.text();
-}
-
-function resolveNuxtPrimitive(data, value) {
-  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value < data.length) {
-    return data[value];
-  }
-  return value;
-}
-
-export function extractHeyboxRatingCount(html) {
-  const match = String(html || "").match(
-    /<script type="application\/json"[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/
-  );
-  if (!match) return null;
-
-  let data;
-  try {
-    data = JSON.parse(match[1]);
-  } catch {
-    return null;
-  }
-
-  if (!Array.isArray(data)) return null;
-
-  let bestCount = 0;
-  for (const item of data) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
-    if (!Object.hasOwn(item, "score_comment")) continue;
-
-    const count = Number(resolveNuxtPrimitive(data, item.score_comment));
-    if (Number.isFinite(count) && count > bestCount) bestCount = count;
-  }
-
-  return bestCount > 0 ? bestCount : null;
-}
-
-export async function getHeyboxRatingCount(appid, options = {}) {
-  const requestText = options.fetchText || fetchText;
-  const urls = [
-    new URL(`https://www.xiaoheihe.cn/app/topic/game/pc/${appid}`),
-    new URL("https://api.xiaoheihe.cn/game/share_game_detail")
-  ];
-  urls[1].searchParams.set("appid", appid);
-  urls[1].searchParams.set("game_type", "pc");
-
-  for (const url of urls) {
-    try {
-      const html = await requestText(url, {
-        referer: "https://www.xiaoheihe.cn/"
-      });
-      const count = extractHeyboxRatingCount(html);
-      if (count) return count;
-    } catch {
-      // Try the next public detail endpoint; rating count is optional.
-    }
-  }
-
-  return null;
+function normalizeRatingCount(value) {
+  const count = Number(value);
+  return Number.isFinite(count) && count > 0 ? Math.trunc(count) : null;
 }
 
 export async function searchSteam(query, options = {}) {
@@ -236,12 +152,6 @@ export async function searchHeybox(query, steamAppid, options = {}) {
 
   const match = ranked[0] || null;
   if (!match) return null;
-  let ratingCount = null;
-  try {
-    ratingCount = await getHeyboxRatingCount(match.appid || match.steam_appid, options);
-  } catch {
-    ratingCount = null;
-  }
 
   return {
     appid: match.appid || null,
@@ -249,13 +159,20 @@ export async function searchHeybox(query, steamAppid, options = {}) {
     name: match.name,
     score: match.score || null,
     scoreText: match.score || match.score_desc || null,
-    ratingCount,
+    ratingCount: normalizeRatingCount(match.rating_count ?? match.comment_count),
     matchedBy: Number(match.steam_appid || match.appid || 0) === Number(steamAppid) ? "appid" : "name"
   };
 }
 
 export async function getRatings(query, options = {}) {
-  const steamApp = await searchSteam(query, options);
+  let steamApp = null;
+  let steamSearchError = null;
+  try {
+    steamApp = await searchSteam(query, options);
+  } catch (error) {
+    steamSearchError = error;
+  }
+
   const appid = steamApp?.id || null;
 
   const [steamReviews, heybox] = await Promise.allSettled([
@@ -275,7 +192,10 @@ export async function getRatings(query, options = {}) {
     steam: steamReviews.status === "fulfilled" ? steamReviews.value : null,
     heybox: heybox.status === "fulfilled" ? heybox.value : null,
     errors: {
-      steam: steamReviews.status === "rejected" ? steamReviews.reason.message : null,
+      steam:
+        steamReviews.status === "rejected"
+          ? steamReviews.reason.message
+          : steamSearchError?.message || null,
       heybox: heybox.status === "rejected" ? heybox.reason.message : null
     },
     fetchedAt: new Date().toISOString()

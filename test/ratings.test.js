@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { extractHeyboxRatingCount, getRatings } from "../src/core/ratings.js";
+import { getRatings } from "../src/core/ratings.js";
 
 test("getRatings combines Steam search, Steam reviews, and Heybox rating", async () => {
   const calls = [];
@@ -42,6 +42,7 @@ test("getRatings combines Steam search, Steam reviews, and Heybox rating", async
               steam_appid: 1145360,
               name: "哈迪斯",
               score: "9.4",
+              comment_count: 12013,
               platforms: ["steam"],
               type: "game"
             }
@@ -52,10 +53,10 @@ test("getRatings combines Steam search, Steam reviews, and Heybox rating", async
 
     throw new Error(`Unexpected URL: ${url}`);
   };
-  const fetchText = async (url) => {
-    assert.equal(url.hostname, "api.xiaoheihe.cn");
-    assert.equal(url.pathname, "/game/share_game_detail");
-    return `<script type="application/json" id="__NUXT_DATA__">[{"score_comment":1},12013]</script>`;
+  let fetchTextCalls = 0;
+  const fetchText = async () => {
+    fetchTextCalls += 1;
+    throw new Error("page scraping must not be used");
   };
 
   const data = await getRatings("Hades", { fetchJson, fetchText });
@@ -65,16 +66,12 @@ test("getRatings combines Steam search, Steam reviews, and Heybox rating", async
   assert.equal(data.heybox.scoreText, "9.4");
   assert.equal(data.heybox.ratingCount, 12013);
   assert.equal(data.heybox.matchedBy, "appid");
+  assert.equal(fetchTextCalls, 0);
   assert.deepEqual(data.errors, {
     steam: null,
     heybox: null
   });
   assert.equal(calls.length, 3);
-});
-
-test("extractHeyboxRatingCount reads Nuxt score comments", () => {
-  const html = `<script type="application/json" id="__NUXT_DATA__">[{"star_1":2,"score_comment":1},321]</script>`;
-  assert.equal(extractHeyboxRatingCount(html), 321);
 });
 
 test("getRatings preserves per-source errors without failing the whole lookup", async () => {
@@ -109,5 +106,42 @@ test("getRatings preserves per-source errors without failing the whole lookup", 
   assert.deepEqual(data.errors, {
     steam: "steam reviews failed",
     heybox: "heybox failed"
+  });
+});
+
+test("getRatings keeps Heybox results when Steam search is unavailable", async () => {
+  const fetchJson = async (url) => {
+    if (url.hostname === "store.steampowered.com") {
+      throw new Error("steam search failed");
+    }
+
+    if (url.hostname === "api.xiaoheihe.cn") {
+      return {
+        result: {
+          games: [
+            {
+              appid: 1145360,
+              steam_appid: 1145360,
+              name: "哈迪斯",
+              score: "9.4",
+              platforms: ["steam"],
+              type: "game"
+            }
+          ]
+        }
+      };
+    }
+
+    throw new Error(`Unexpected URL: ${url}`);
+  };
+
+  const data = await getRatings("Hades", { fetchJson });
+
+  assert.equal(data.matched, null);
+  assert.equal(data.steam, null);
+  assert.equal(data.heybox.scoreText, "9.4");
+  assert.deepEqual(data.errors, {
+    steam: "steam search failed",
+    heybox: null
   });
 });

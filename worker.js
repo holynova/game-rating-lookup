@@ -13,11 +13,24 @@ const jsonHeaders = {
   ...corsHeaders
 };
 
-function sendJson(status, body) {
+const serviceInfo = {
+  ok: true,
+  service: "game-rating-lookup-api",
+  endpoint: "/api/ratings?q=<game-name>"
+};
+
+function sendJson(status, body, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: jsonHeaders
+    headers: {
+      ...jsonHeaders,
+      ...headers
+    }
   });
+}
+
+function methodNotAllowed() {
+  return sendJson(405, { error: "Method not allowed" }, { allow: "GET, OPTIONS" });
 }
 
 export default {
@@ -30,9 +43,17 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    if (url.pathname === "/" || url.pathname === "/healthz") {
+      if (request.method !== "GET") return methodNotAllowed();
+      return sendJson(200, serviceInfo);
+    }
+
     if (url.pathname !== "/api/ratings") {
       return sendJson(404, { error: "Not found" });
     }
+
+    if (request.method !== "GET") return methodNotAllowed();
 
     const query = String(url.searchParams.get("q") || "").trim();
     if (query.length < 2) {

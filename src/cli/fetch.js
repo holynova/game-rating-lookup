@@ -16,7 +16,7 @@ export async function fetchJsonWithCurlFallback(url, headers = {}, options = {})
   }
 }
 
-async function fetchJsonWithCurl(url, headers = {}, options = {}) {
+export async function fetchJsonWithCurl(url, headers = {}, options = {}) {
   const timeoutSeconds = Math.ceil(Number(options.timeoutMs || 15000) / 1000);
   const args = ["-sS", "-L", "--max-time", String(timeoutSeconds)];
 

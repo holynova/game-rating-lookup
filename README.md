@@ -14,6 +14,31 @@ Game Tier 是一个游戏评分查询工具，支持 Web 页面和命令行两�
 
 移动端优先的在线版本：打开页面后输入一个或多个游戏名即可查询。批量查询不截断数量，并以 3 个并发请求排队执行。
 
+## API
+
+健康检查：
+
+```text
+https://game-rating-lookup-api.holynova.workers.dev/
+```
+
+查询评分：
+
+```text
+https://game-rating-lookup-api.holynova.workers.dev/api/ratings?q=Hades
+```
+
+页面通过 `public/config.js` 读取 API 地址。若 `workers.dev` 在所在网络无法访问，先在 Cloudflare Worker 的 Domains & Routes 中绑定自定义域名，再在 GitHub 仓库的 Settings → Secrets and variables → Actions → Variables 设置 `GAME_RATING_API_BASE`，例如 `https://api.example.com`。
+
+Worker 自动部署需要配置以下 GitHub Actions Secrets：
+
+```text
+CLOUDFLARE_API_TOKEN
+CLOUDFLARE_ACCOUNT_ID
+```
+
+之后推送修改，或在 Actions 中手动运行 `Deploy Cloudflare Worker` 即可更新接口。
+
 ## CLI
 
 ### 安装
