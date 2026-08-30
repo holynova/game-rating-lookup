@@ -1,4 +1,4 @@
-name = "game-rating-lookup-api"
+name = "game-rating-lookup"
 main = "worker.js"
 compatibility_date = "2026-07-01"
 workers_dev = true

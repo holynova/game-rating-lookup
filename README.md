@@ -19,18 +19,18 @@ Game Tier 是一个游戏评分查询工具，支持 Web 页面和命令行两�
 健康检查：
 
 ```text
-https://game-rating-lookup-api.holynova.workers.dev/
+https://game-rating-lookup.holynova.workers.dev/
 ```
 
 查询评分：
 
 ```text
-https://game-rating-lookup-api.holynova.workers.dev/api/ratings?q=Hades
+https://game-rating-lookup.holynova.workers.dev/api/ratings?q=Hades
 ```
 
-页面通过 `public/config.js` 读取 API 地址。若 `workers.dev` 在所在网络无法访问，先在 Cloudflare Worker 的 Domains & Routes 中绑定自定义域名，再在 GitHub 仓库的 Settings → Secrets and variables → Actions → Variables 设置 `GAME_RATING_API_BASE`，例如 `https://api.example.com`。
+页面通过 `public/config.js` 读取 API 地址。当前线上 Worker 服务名是 `game-rating-lookup`。若 `workers.dev` 在所在网络无法访问，先在 Cloudflare Worker 的 Domains & Routes 中绑定自定义域名，再在 GitHub 仓库的 Settings → Secrets and variables → Actions → Variables 设置 `GAME_RATING_API_BASE`，例如 `https://api.example.com`。
 
-Worker 自动部署需要配置以下 GitHub Actions Secrets：
+仓库已连接 Cloudflare Workers Builds，推送到 `master` 会由 Cloudflare 在线构建自动发布 Worker。若改用 GitHub Actions 手动发布，需要配置以下 Secrets：
 
 ```text
 CLOUDFLARE_API_TOKEN

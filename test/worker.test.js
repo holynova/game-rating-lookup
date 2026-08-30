@@ -8,7 +8,7 @@ test("worker root exposes a health response", async () => {
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     ok: true,
-    service: "game-rating-lookup-api",
+    service: "game-rating-lookup",
     endpoint: "/api/ratings?q=<game-name>"
   });
 });

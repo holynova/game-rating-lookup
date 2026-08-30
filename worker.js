@@ -15,7 +15,7 @@ const jsonHeaders = {
 
 const serviceInfo = {
   ok: true,
-  service: "game-rating-lookup-api",
+  service: "game-rating-lookup",
   endpoint: "/api/ratings?q=<game-name>"
 };
 

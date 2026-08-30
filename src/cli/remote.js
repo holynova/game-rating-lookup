@@ -1,6 +1,6 @@
 import { fetchJsonWithCurl } from "./fetch.js";
 
-const defaultApiBase = "https://game-rating-lookup-api.holynova.workers.dev";
+const defaultApiBase = "https://game-rating-lookup.holynova.workers.dev";
 
 export async function fetchRemoteRating(query, apiBase = process.env.GAME_TIER_API_BASE || defaultApiBase) {
   const base = String(apiBase || "").replace(/\/$/, "");
