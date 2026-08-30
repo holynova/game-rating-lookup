@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm run build:version && npm run build:config
+      - run: npm run build:version && npm run build:config && GITHUB_SHA="$GITHUB_SHA" node scripts/write-web-assets.js
         env:
           GAME_RATING_API_BASE: ${{ vars.GAME_RATING_API_BASE }}
       - uses: actions/configure-pages@v5
