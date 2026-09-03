@@ -1,6 +1,8 @@
 .chrome-*/
 mobile-*.png
 node_modules/
+dist/
+.pages-dist/
 .wrangler/
 .worker-dist/
 .DS_Store

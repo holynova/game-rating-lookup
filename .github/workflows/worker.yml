@@ -11,6 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: pnpm run build
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
@@ -20,5 +27,5 @@ jobs:
       - name: Verify Worker health
         run: |
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
-            https://game-rating-lookup-api.holynova.workers.dev/healthz \
+            https://game-rating-lookup.holynova.workers.dev/healthz \
             | grep -q '"ok":true'

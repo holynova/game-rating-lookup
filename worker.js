@@ -34,7 +34,7 @@ function methodNotAllowed() {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -44,26 +44,35 @@ export default {
 
     const url = new URL(request.url);
 
-    if (url.pathname === "/" || url.pathname === "/healthz") {
+    if (url.pathname === "/healthz") {
       if (request.method !== "GET") return methodNotAllowed();
       return sendJson(200, serviceInfo);
     }
 
-    if (url.pathname !== "/api/ratings") {
+    if (url.pathname === "/api/ratings") {
+      if (request.method !== "GET") return methodNotAllowed();
+
+      const query = String(url.searchParams.get("q") || "").trim();
+      if (query.length < 2) {
+        return sendJson(400, { error: "请输入至少两个字符的游戏名称。" });
+      }
+
+      try {
+        return sendJson(200, await getRatings(query));
+      } catch (error) {
+        return sendJson(500, { error: error.message || "查询失败。" });
+      }
+    }
+
+    if (url.pathname.startsWith("/api/")) {
       return sendJson(404, { error: "Not found" });
     }
 
-    if (request.method !== "GET") return methodNotAllowed();
-
-    const query = String(url.searchParams.get("q") || "").trim();
-    if (query.length < 2) {
-      return sendJson(400, { error: "请输入至少两个字符的游戏名称。" });
+    if (request.method !== "GET" && request.method !== "HEAD") return methodNotAllowed();
+    if (!env?.ASSETS?.fetch) {
+      return sendJson(503, { error: "Static assets binding unavailable" });
     }
 
-    try {
-      return sendJson(200, await getRatings(query));
-    } catch (error) {
-      return sendJson(500, { error: error.message || "查询失败。" });
-    }
+    return env.ASSETS.fetch(request);
   }
 };
