@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-const defaultApiBase = "https://game-rating-lookup.holynova.workers.dev";
+const defaultApiBase = "https://game-rating-lookup.xiaosang.cc";
 const apiBase = String(process.env.GAME_RATING_API_BASE || defaultApiBase)
   .trim()
   .replace(/\/+$/, "");

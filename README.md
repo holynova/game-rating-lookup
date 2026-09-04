@@ -31,6 +31,8 @@ https://game-rating-lookup.xiaosang.cc/api/ratings?q=Hades
 
 Cloudflare Worker 服务名是 `game-rating-lookup`，根路径提供 Web 页面，`/healthz` 提供健康检查，`/api/ratings` 提供查询接口。GitHub Pages 通过 `public/config.js` 读取 API 地址；Cloudflare 产物使用同源 API。若 `workers.dev` 在所在网络无法访问，可使用上面的自定义域名。
 
+Worker 的发布地址是 `https://game-rating-lookup.xiaosang.cc`。
+
 静态部署构建：`pnpm run build` 生成 Cloudflare 使用的 `dist/`；`pnpm run build:pages` 额外生成保留原 `/public/` 路径的 `.pages-dist/`，供 GitHub Pages 工作流发布。
 
 仓库已连接 Cloudflare Workers Builds，推送到 `master` 会由 Cloudflare 在线构建自动发布 Worker。若改用 GitHub Actions 手动发布，需要配置以下 Secrets：

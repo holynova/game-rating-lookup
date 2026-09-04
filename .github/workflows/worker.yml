@@ -27,5 +27,5 @@ jobs:
       - name: Verify Worker health
         run: |
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
-            https://game-rating-lookup.holynova.workers.dev/healthz \
+            https://game-rating-lookup.xiaosang.cc/healthz \
             | grep -q '"ok":true'

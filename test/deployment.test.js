@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 const deployedWorker = "game-rating-lookup";
-const deployedApiBase = `https://${deployedWorker}.holynova.workers.dev`;
+const deployedApiBase = `https://${deployedWorker}.xiaosang.cc`;
 
 test("deployment config points all clients at the deployed Worker", async () => {
   const [wranglerConfig, webConfig, configWriter, cliRemote, pagesWorkflow, workerWorkflow, assetWriter] = await Promise.all([
@@ -25,6 +25,6 @@ test("deployment config points all clients at the deployed Worker", async () => 
   assert.match(pagesWorkflow, /pnpm run build:pages/);
   assert.match(pagesWorkflow, /path: \.pages-dist/);
   assert.match(workerWorkflow, /pnpm run build/);
-  assert.match(workerWorkflow, /game-rating-lookup\.holynova\.workers\.dev\/healthz/);
+  assert.match(workerWorkflow, /game-rating-lookup\.xiaosang\.cc\/healthz/);
   assert.match(assetWriter, /GITHUB_SHA/);
 });

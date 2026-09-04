@@ -5,7 +5,7 @@ import { buildStatic } from "./build-static.mjs";
 
 const rootDir = fileURLToPath(new URL("..", import.meta.url));
 const pagesDir = join(rootDir, ".pages-dist");
-const pagesApiBase = "https://game-rating-lookup.holynova.workers.dev";
+const pagesApiBase = "https://game-rating-lookup.xiaosang.cc";
 
 if (!String(process.env.GAME_RATING_API_BASE || "").trim()) {
   process.env.GAME_RATING_API_BASE = pagesApiBase;
