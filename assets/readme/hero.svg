@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Game Tier</title>
+  <desc id="desc">Game Tier 是一个游戏评分查询工具，支持 Web 页面和命令行两种形态。输入游戏名称后，会查询 Steam 评价和小黑盒评分，并按普通、优秀、稀有、史诗、传奇展示结果。</desc>
+  <rect width="1200" height="360" rx="28" fill="#101722"/>
+  <path d="M0 310C250 280 410 342 650 300s350-18 550 20v40H0Z" fill="#7fa7c9" opacity=".12"/>
+  <text x="58" y="52" fill="#d9a441" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" letter-spacing="2.5">RATINGS · TIERS · CLI</text>
+  <path d="M58 70H710" stroke="#7fa7c9" stroke-width="2" opacity=".6"/>
+  <text x="58" y="126" fill="#edf1f4" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="52" font-weight="700">Game Tier</text>
+  <text x="60" y="190" fill="#7fa7c9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="21">Game Tier 是一个游戏评分查询工具，支持 Web</text><text x="60" y="220" fill="#7fa7c9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="21">页面和命令行两种形态。输入游戏名称后，会查询 Steam…</text>
+    <g transform="translate(60 274)"><rect width="250" height="34" rx="17" fill="#d9a441"/><text x="18" y="23" fill="#101722" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">PROJECT-NATIVE README</text></g>
+  <g transform="translate(816 52)"><rect width="326" height="232" rx="16" fill="#edf1f4"/><path d="M24 40h278M128 40v174M230 40v174" stroke="#7fa7c9" stroke-width="3"/><path d="M24 70h286" stroke="#7fa7c9" stroke-width="3" opacity=".8"/><path d="M24 104h286" stroke="#7fa7c9" stroke-width="3" opacity=".8"/><path d="M24 138h286" stroke="#7fa7c9" stroke-width="3" opacity=".8"/><path d="M24 172h286" stroke="#7fa7c9" stroke-width="3" opacity=".8"/><path d="M24 206h286" stroke="#7fa7c9" stroke-width="3" opacity=".8"/><rect x="30" y="79" width="84" height="15" rx="7" fill="#d9a441"/><rect x="138" y="113" width="72" height="15" rx="7" fill="#d9a441" opacity=".8"/></g>
+</svg>

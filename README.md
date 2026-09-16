@@ -2,6 +2,11 @@
 
 Game Tier 是一个游戏评分查询工具，支持 Web 页面和命令行两种形态。输入游戏名称后，会查询 Steam 评价和小黑盒评分，并按普通、优秀、稀有、史诗、传奇展示结果。
 
+<p align="center">
+  <img src="assets/readme/hero.svg" width="100%" alt="Game Tier: Game Tier 是一个游戏评分查询工具，支持 Web 页面和命令行两种形态。输入游戏名称后，会查询 Steam 评价和小黑盒评分，并按普通、优秀、稀有、史诗、传奇展示结果。">
+</p>
+
+
 ![Game Tier 游戏评分查询结果](assets/screenshot.png)
 
 - GitHub Repo: https://github.com/holynova/game-rating-lookup
