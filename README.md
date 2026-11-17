@@ -1,154 +1,130 @@
-# Game Tier
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="装备鉴定台 Game Tier — 五档稀有度宝石（普通/优秀/稀有/史诗/传奇）与 Hades 鉴定卡：Steam 好评 98%，小黑盒 9.4，金装">
+</p>
 
-![项目截图](assets/screenshot.png)
+<p align="center">
+  <a href="https://game-rating-lookup.xiaosang.cc/">▶ 在线体验 Try Online</a>
+  ·
+  <a href="https://www.npmjs.com/package/game-tier">npm: game-tier</a>
+  ·
+  <a href="https://github.com/holynova/game-rating-lookup">GitHub 仓库</a>
+</p>
 
-Game Tier 是一个游戏评分查询工具，支持 Web 页面和命令行两种形态。输入游戏名称后，会查询 Steam 评价和小黑盒评分，并按普通、优秀、稀有、史诗、传奇展示结果。
+输入游戏名，查 Steam 好评率与小黑盒评分，按白、绿、蓝、紫、金五档定级。三种形态：移动端优先的 Web 页、npm 命令行工具、开放的查询 API。
 
-- GitHub Repo: https://github.com/holynova/game-rating-lookup
-- GitHub Pages: https://holynova.github.io/game-rating-lookup/
-- npm: https://www.npmjs.com/package/game-tier
+Look up a game's Steam review score and Xiaoheihe rating, graded into five tiers (white, green, blue, purple, gold). Three forms: a mobile-first web app, an npm CLI, and an open query API.
 
-## Web Demo
+## 截图 / Screenshot
 
-[![装备鉴定台 Demo 分享卡片](assets/demo-share-card.png)](https://holynova.github.io/game-rating-lookup/)
+<p align="center">
+  <img src="./assets/readme/screenshot-main.png" width="300" alt="装备鉴定台移动端界面：输入 Hades、Cyberpunk 2077、Stardew Valley 后返回好评率、评测数与小黑盒评分，按金装/紫装定级">
+</p>
 
-移动端优先的在线版本：打开页面后输入一个或多个游戏名即可查询。批量查询不截断数量，并以 3 个并发请求排队执行。
+## 档位 / Tiers
 
-## API
+以 Steam 好评率定档；无 Steam 数据时用小黑盒评分 ×10。传奇与史诗有评测数门槛：
 
-健康检查：
+| 档位 | 等级 | 条件 |
+|---|---|---|
+| 🟡 传奇 | gold | 好评率 ≥95% 且评测数 ≥500 |
+| 🟣 史诗 | purple | 好评率 ≥85% 且评测数 ≥50 |
+| 🔵 稀有 | blue | 好评率 ≥75% |
+| 🟢 优秀 | green | 好评率 ≥60% |
+| ⚪ 普通 | white | 其余，或查不到评分 |
 
-```text
-https://game-rating-lookup.holynova.workers.dev/
-```
+## Web 版 / Web
 
-查询评分：
+- 移动端优先：输入一个或多个游戏名（逗号、分号、换行分隔），批量查询不截断数量，3 个并发排队执行。
+- 查询历史存在浏览器 localStorage，可按档位筛选；评分来源可在 Steam 与小黑盒之间切换。
+- 批量查询结果可直接在页面查看每款游戏的 Steam 好评率、评测数与小黑盒评分。
 
-```text
-https://game-rating-lookup.holynova.workers.dev/api/ratings?q=Hades
-```
-
-页面通过 `public/config.js` 读取 API 地址。当前线上 Worker 服务名是 `game-rating-lookup`。若 `workers.dev` 在所在网络无法访问，先在 Cloudflare Worker 的 Domains & Routes 中绑定自定义域名，再在 GitHub 仓库的 Settings → Secrets and variables → Actions → Variables 设置 `GAME_RATING_API_BASE`，例如 `https://api.example.com`。
-
-仓库已连接 Cloudflare Workers Builds，推送到 `master` 会由 Cloudflare 在线构建自动发布 Worker。若改用 GitHub Actions 手动发布，需要配置以下 Secrets：
-
-```text
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
-```
-
-之后推送修改，或在 Actions 中手动运行 `Deploy Cloudflare Worker` 即可更新接口。
-
-## CLI
-
-### 安装
-
-全局安装：
+## CLI / 命令行
 
 ```bash
 npm install -g game-tier
-```
-
-也可以不安装，直接运行：
-
-```bash
+# 或不安装直接运行
 npx game-tier Hades
 ```
 
-### 基本使用
+```bash
+game-tier Hades "Elden Ring" "Cyberpunk 2077"   # 一次查多个
+game-tier --file games.txt --limit 3            # 从文件读游戏名，每行一个
+game-tier --json Hades                          # 输出原始 JSON
+game-tier --refresh Hades                       # 忽略缓存重新查询
+game-tier --no-cache Hades                      # 本次不读写缓存
+game-tier history --grade gold                  # 按档位筛选历史
+game-tier cache clear                           # 清空缓存
+```
 
-查询单个游戏：
+| 参数 | 说明 |
+|---|---|
+| `--file <path>` / `-f` | 从文本文件读取游戏名 |
+| `--json` | 输出原始 JSON |
+| `--refresh` | 忽略缓存并重新查询 |
+| `--no-cache` | 不读取或写入缓存 |
+| `--no-color` | 禁用终端颜色 |
+| `--limit <number>` | 批量查询上限，默认不限制 |
+| `--help` / `-h` | 显示帮助 |
+
+查询结果默认缓存到 `~/.cache/game-tier/results.json`（`$XDG_CACHE_HOME` 优先），`history` 命令查看的就是这份缓存。API 地址可用环境变量 `GAME_TIER_API_BASE` 覆盖。
+
+## API
+
+```
+GET https://game-rating-lookup.holynova.workers.dev/api/ratings?q=Hades
+GET https://game-rating-lookup.holynova.workers.dev/        # 健康检查
+```
+
+- 查询至少 2 个字符；返回 `query`、`matched`（鉴定名与 appid）、`steam`（好评率、评测数）、`heybox`（小黑盒评分）、`errors`、`fetchedAt`。
+- 两个数据源独立查询，一方失败不影响另一方；CORS 开放，可直接在浏览器调用。
+
+## 匹配逻辑 / Matching
+
+- Steam：中文、国区商店搜索，标题精确匹配加权，demo / DLC / 原声带类结果扣权，避免查到附属内容。
+- 小黑盒：优先按 Steam appid 匹配（最准），无 appid 时按游戏名匹配。
+- 冷门游戏可能误配，请以返回的 `matched.name` 鉴定名为准。
+
+## 本地运行 / Run Locally
+
+零运行时依赖，Node ≥ 18：
 
 ```bash
-game-tier Hades
+npm ci
+npm test            # 27 个测试，node --test
+npm run dev         # node server.js，本地起 Web 服务
 ```
 
-一次查询多个游戏：
+## 技术 / Tech
 
-```bash
-game-tier Hades "Elden Ring" "Cyberpunk 2077"
+- 纯 Node.js，无运行时依赖；CLI 与 Web 共用同一套查询与定级逻辑（`src/core/`）。
+- API 直查 Steam 商店搜索与评价接口、小黑盒搜索接口，实时返回，不做服务端缓存。
+- CLI 远程查 API，失败时用 curl 兜底重试一次。
+
+```
+bin/game-tier.js        CLI 入口
+src/cli/                CLI：远程查询 / curl 兜底 / 本地缓存
+src/core/ratings.js     Steam + 小黑盒查询与匹配打分
+src/core/format.js      档位映射与批量解析
+public/                 Web 应用（装备鉴定台）
+worker.js               API：/api/ratings 与健康检查
+server.js               本地开发服务器
+test/                   27 个测试（node --test）
 ```
 
-从文件读取游戏名，每行一个：
+当前版本 v1.0.1。
 
-```bash
-game-tier --file games.txt
-```
+## 许可 / License
 
-输出原始 JSON：
+MIT License，见 [LICENSE](./LICENSE)。
 
-```bash
-game-tier --json Hades
-```
+## English
 
-### 缓存与历史
+**Game Tier** looks up Steam review scores and Xiaoheihe ratings by game name, graded into five tiers.
 
-CLI 会默认缓存查询结果，避免重复请求。
-
-查看历史：
-
-```bash
-game-tier history
-```
-
-按等级筛选历史：
-
-```bash
-game-tier history --grade gold
-```
-
-可用等级：
-
-```text
-white  普通
-green  优秀
-blue   稀有
-purple 史诗
-gold   传奇
-```
-
-强制刷新，不使用旧缓存：
-
-```bash
-game-tier --refresh Hades
-```
-
-本次查询不读写缓存：
-
-```bash
-game-tier --no-cache Hades
-```
-
-清空缓存：
-
-```bash
-game-tier cache clear
-```
-
-### 参数
-
-```text
---file <path>       从文本文件读取游戏名
---json              输出原始 JSON
---refresh           忽略缓存并重新查询
---no-cache          不读取或写入缓存
---no-color          禁用终端颜色
---limit <number>    批量查询上限，默认不限制
---help              显示帮助
-```
-
-### 示例文件
-
-`games.txt`:
-
-```text
-Hades
-Elden Ring
-Cyberpunk 2077
-```
-
-运行：
-
-```bash
-game-tier --file games.txt --limit 3
-```
+- **Tiers** (by Steam positive rate; Xiaoheihe score ×10 when Steam data is missing): gold ≥95% with ≥500 reviews, purple ≥85% with ≥50, blue ≥75%, green ≥60%, white otherwise.
+- **Web**: mobile-first; paste one or many game names (comma/semicolon/newline separated), unlimited batch size, 3 concurrent requests; history in localStorage with tier filter; switch rating source between Steam and Xiaoheihe.
+- **CLI**: `npm install -g game-tier` (or `npx game-tier Hades`); flags `--file`, `--json`, `--refresh`, `--no-cache`, `--no-color`, `--limit`, `--help`; `history [--grade]` and `cache clear` subcommands; results cached at `~/.cache/game-tier/results.json`; API base overridable via `GAME_TIER_API_BASE`.
+- **API**: `GET /api/ratings?q=<game>` (min 2 chars) returns `query`, `matched` (identified name + appid), `steam`, `heybox`, `errors`, `fetchedAt`; sources queried independently; CORS open. Health check at `/`.
+- **Matching**: Steam store search (Chinese / CN region) with exact-title boost and demo/DLC/soundtrack penalties; Xiaoheihe matched by Steam appid first, then by name. For obscure games, trust the returned `matched.name`.
+- **Run it**: zero runtime dependencies, Node ≥ 18 — `npm ci`, `npm test` (27 tests, `node --test`), `npm run dev` for the local web server.
+- **License**: MIT.
