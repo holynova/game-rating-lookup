@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="360" viewBox="0 0 1200 360"
+     role="img" aria-labelledby="title desc">
+  <title id="title">装备鉴定台 Game Tier — 游戏评分查询 CLI + Web</title>
+  <desc id="desc">深色底标题：装备鉴定台；右侧是白绿蓝紫金五档稀有度宝石，下方是一张 Hades 鉴定结果卡：Steam 好评 98%，小黑盒 9.4，金装传奇。</desc>
+
+  <rect width="1200" height="360" rx="26" fill="#0f1115"/>
+
+  <g id="title-block" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="56" y="62" font-size="19" letter-spacing="3" fill="#f5c518">STEAM + 小黑盒 · CLI + WEB + API</text>
+    <text x="56" y="128" font-size="62" font-weight="700" fill="#f2f4f8">装备鉴定台</text>
+    <text x="56" y="168" font-size="23" fill="#c8d0dc">GAME TIER — 游戏评分查询 CLI + Web</text>
+    <text x="56" y="204" font-size="19" fill="#98a4b3">输入游戏名，查 Steam 好评率与小黑盒评分，按五档定级。</text>
+    <g id="chips" font-size="18" fill="#dfe5ee" text-anchor="middle">
+      <g><rect x="56" y="238" width="158" height="36" rx="18" fill="#1a1d24" stroke="#2f3542" stroke-width="1.5"/><text x="135" y="262">npm: game-tier</text></g>
+      <g><rect x="226" y="238" width="108" height="36" rx="18" fill="#1a1d24" stroke="#2f3542" stroke-width="1.5"/><text x="280" y="262">5 档定级</text></g>
+      <g><rect x="346" y="238" width="144" height="36" rx="18" fill="#1a1d24" stroke="#2f3542" stroke-width="1.5"/><text x="418" y="262">3 并发批量查</text></g>
+      <g><rect x="502" y="238" width="162" height="36" rx="18" fill="#1a1d24" stroke="#2f3542" stroke-width="1.5"/><text x="583" y="262">27 个测试全过</text></g>
+    </g>
+  </g>
+
+  <g id="tiers" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- five rarity gems -->
+    <g id="gems" text-anchor="middle">
+      <g><polygon points="800,86 824,110 800,134 776,110" fill="#e8ecf4"/><text x="800" y="158" font-size="18" fill="#e8ecf4">普通</text></g>
+      <g><polygon points="880,86 904,110 880,134 856,110" fill="#4ade80"/><text x="880" y="158" font-size="18" fill="#4ade80">优秀</text></g>
+      <g><polygon points="960,86 984,110 960,134 936,110" fill="#60a5fa"/><text x="960" y="158" font-size="18" fill="#60a5fa">稀有</text></g>
+      <g><polygon points="1040,86 1064,110 1040,134 1016,110" fill="#c084fc"/><text x="1040" y="158" font-size="18" fill="#c084fc">史诗</text></g>
+      <g><polygon points="1120,86 1144,110 1120,134 1096,110" fill="#f5c518"/><text x="1120" y="158" font-size="18" fill="#f5c518">传奇</text></g>
+    </g>
+    <!-- result card -->
+    <g id="card">
+      <rect x="760" y="188" width="364" height="118" rx="12" fill="#1a1d24" stroke="#2f3542" stroke-width="1.5"/>
+      <text x="784" y="222" font-size="22" font-weight="700" fill="#f2f4f8">Hades</text>
+      <text x="784" y="252" font-size="18" fill="#98a4b3">Steam 好评 +98% · 304,957 评</text>
+      <text x="784" y="280" font-size="18" fill="#98a4b3">小黑盒 +9.4</text>
+      <g id="badge">
+        <rect x="1028" y="200" width="76" height="30" rx="15" fill="#f5c518"/>
+        <text x="1066" y="221" font-size="18" font-weight="700" fill="#1c1a17" text-anchor="middle">金装</text>
+      </g>
+    </g>
+    <text x="942" y="336" font-size="18" fill="#98a4b3" text-anchor="middle">好评率定档 · 评测数设门槛</text>
+  </g>
+</svg>
